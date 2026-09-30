@@ -1,112 +1,172 @@
-# Data-Engineering-project
-Domestic Flight Delays
+# Data Engineering Project — Domestic Flight Delays
 
-Data processing and analysis project using PySpark.
+Data processing and analysis project using **PySpark**.
 
-🛠️ Technologies
+## 🛠️ Technologies
 
-Python 3.13
+- Python 3.13
+- PySpark 4.2.0
+- Poetry
+- SQL Server
+- Java 21 JDK
+- Git
 
-PySpark 4.2.0
+## 📋 Requirements
 
-Poetry
+Before setting up the project, install:
 
-SQL Server
+- **Python 3.13** from the official Python website
+- **Java JDK 21** or another Java version compatible with the project
+- **Poetry**
+- **Git**
 
-📋 Requirements
+Check that the required tools are available:
 
-Before starting, install:
-
-Python 3.13 via the official site otherwise poetry may not recognize it
-
-Java 21 JDK or any versions compatible with the project
-
-Poetry
-
-Git
-
-Check your installations:
-
+```bash
 python --version
 poetry --version
 git --version
+java --version
+```
 
-If poetry is not recognised, verify that it is set in your system variables
+On Windows, you can also check which Python versions are installed with:
 
-📥 Project Setup
+```bash
+py -0p
+```
 
-Clone the repository:
+If `poetry` is installed but the command is not recognized, verify that Poetry's installation directory is included in your system `PATH`.
 
+---
+
+## 📥 Project Setup
+
+### 1. Clone the repository
+
+```bash
 git clone <REPOSITORY_URL>
+```
 
 Move into the project directory:
 
-cd domestic-flight-delays
+```bash
+cd Data-Engineering-project
+```
 
-Configure Python
+### 2. Configure Python
 
 Check that Python 3.13 is available:
 
+```bash
 py -0p
+```
 
+### 3. Install dependencies
 
-Tell Poetry to use Python 3.13:
+The repository already includes a `poetry.lock` file.
 
-poetry env use 3.13
+After cloning the project, you do **not** need to generate a new lock file.
 
+Simply run:
 
-Check the configured environment:
-
-poetry env info
-
-Install dependencies
+```bash
 poetry install
+```
 
+Verify the environment:
 
-This creates the virtual environment and installs the dependencies defined in:
+```bash
+poetry env info
+```
 
-pyproject.toml
-poetry.lock
+Poetry will create the virtual environment and install the dependency versions defined in `poetry.lock`.
 
-🐍 Python Environment
+Only run `poetry lock` if the project dependencies are modified.
+
+---
+
+## 🐍 Python Environment
 
 Python dependencies are managed with Poetry.
 
-The main versions are pinned to ensure a reproducible environment:
+Main versions used by the project:
 
+```text
 Python  : 3.13
 PySpark : 4.2.0
 pandas  : 2.2.3
+```
 
-☕ Java
+To run Python inside the Poetry environment:
 
-PySpark requires Java.
+```bash
+poetry run python
+```
 
-Java is not managed by Poetry and must be installed separately on the machine.
+You can also execute project scripts with:
 
-🔐 Sensitive Data
+```bash
+poetry run python path/to/script.py
+```
 
-Never commit the following files or information:
+---
 
-.env
-credentials
-passwords
-API keys
-SQL Server credentials
+## ☕ Java
 
+PySpark requires Java to run.
 
-The .env file should be added to .gitignore.
+Java is **not managed by Poetry** and must therefore be installed separately on the machine.
 
-🧪 Environment Check
+Check the installed Java version with:
 
-After installation, verify PySpark:
+```bash
+java --version
+```
 
+If required, also verify that `JAVA_HOME` is correctly configured.
+
+---
+
+## 🧪 Environment Check
+
+After running:
+
+```bash
+poetry install
+```
+
+verify that PySpark is correctly installed:
+
+```bash
 poetry run python -c "import pyspark; print('PySpark:', pyspark.__version__)"
-
+```
 
 Verify pandas:
 
+```bash
 poetry run python -c "import pandas; print('pandas:', pandas.__version__)"
+```
 
+---
+
+## 🔐 Sensitive Data
+
+Never commit sensitive information such as:
+
+- `.env` files
+- credentials
+- passwords
+- API keys
+- SQL Server usernames or passwords
+
+The `.env` file must be included in `.gitignore`.
+
+Example:
+
+```gitignore
+.env
+```
+
+If environment variables are required by the project, create your own local `.env` file after cloning the repository.
 
 If both commands work, the Python environment is correctly configured.
