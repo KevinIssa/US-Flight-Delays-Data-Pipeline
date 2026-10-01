@@ -1,15 +1,12 @@
 from pathlib import Path
 from urllib.request import Request, urlopen, urlretrieve
 from urllib.parse import urljoin
+from config import *
 import re
 # Page contenant tous les ZIP TranStats
 BASE_URL = "https://transtats.bts.gov/PREZIP/"
 
-# Années voulues
-START_YEAR = 2019
-END_YEAR = 2026
 # Dossier où tous les ZIP seront téléchargés
-OUTPUT_DIR = Path(f"transtats_flights_{START_YEAR}_{END_YEAR}")
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 
