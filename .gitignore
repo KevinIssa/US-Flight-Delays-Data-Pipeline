@@ -5,3 +5,6 @@ transtats_flights_2019_2026/readme.html
 *.csv#
 Stats_US_Flights_2019_2026/readme.html
 .vscode/settings.json
+*.crc
+*.parquet
+Data/Silver/Flights/_SUCCESS
