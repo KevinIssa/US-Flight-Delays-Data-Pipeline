@@ -9,6 +9,7 @@ package-mode = false
 python = ">=3.12,<3.14"
 pyspark = "4.2.0"
 pandas = "2.2.3"
+python-dotenv = "*"
 
 [build-system]
 requires = ["poetry-core>=2.0.0"]
