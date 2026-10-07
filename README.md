@@ -12,13 +12,17 @@ Data processing and analysis project using **PySpark**.
 - Git
 
 ## 📋 Requirements
-
+- **32 go of ram to run the whole dataset locally** 
 Before setting up the project, install:
 
 - **Python 3.13** from the official Python website
 - **Java JDK 21** or another Java version compatible with the project
-- **Poetry**
+- **Poetry** 
 - **Git**
+IF ON WINDOWS
+- **Hadoop winutils.exe + hadoop.dll from https://github.com/zehelh/winutils**
+- **HADOOP_HOME configured**
+- **%HADOOP_HOME%\bin added to PATH**
 
 Check that the required tools are available:
 
