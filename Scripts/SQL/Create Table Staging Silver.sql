@@ -73,7 +73,7 @@ BEGIN TRY
        Table: Passengers
        ============================================================ */
 
-    CREATE TABLE Passengers
+    CREATE TABLE SegmentPassengers
     (
         
         [SEGMENT_PASSENGERS_ID]  INT PRIMARY KEY IDENTITY(1,1),
@@ -113,7 +113,7 @@ BEGIN TRY
     CREATE TABLE Runways
     (
         [OID]           INT PRIMARY KEY IDENTITY(1,1),
-        [STATE_CODE]    VARCHAR(10) NOT NULL,
+        [STATE_CODE]    VARCHAR(10),
         [ARPT_ID]       VARCHAR(20) NOT NULL,
         [ARPT_NAME]     VARCHAR(200),
         [CITY]          VARCHAR(100),
