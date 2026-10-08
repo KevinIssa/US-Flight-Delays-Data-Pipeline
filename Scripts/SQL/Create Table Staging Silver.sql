@@ -9,7 +9,7 @@ BEGIN TRY
     BEGIN TRANSACTION;
     
     DROP TABLE IF EXISTS Flights
-    DROP TABLE IF EXISTS Passengers
+    DROP TABLE IF EXISTS SegmentPassengers
     DROP TABLE IF EXISTS Runways
 
     /* ============================================================
@@ -89,8 +89,8 @@ BEGIN TRY
         [MAIL]                   DECIMAL(18, 2),
         [DISTANCE]               DECIMAL(12, 2),
         [AIR_TIME]               DECIMAL(12, 2),
-        [UNIQUE_CARRIER]         VARCHAR(10) NOT NULL,
-        [AIRLINE_ID]             INT NOT NULL,
+        [UNIQUE_CARRIER]         VARCHAR(10),
+        [AIRLINE_ID]             INT,
         [CARRIER_NAME]           VARCHAR(200),
         [ORIGIN_AIRPORT_ID]      INT NOT NULL,
         [ORIGIN]                 VARCHAR(10) NOT NULL,
