@@ -7,21 +7,28 @@ GO
 BEGIN TRY
 
     BEGIN TRANSACTION;
+    
+    DROP TABLE IF EXISTS Flights
+    DROP TABLE IF EXISTS Passengers
+    DROP TABLE IF EXISTS Runways
 
     /* ============================================================
        Table: Flights
        ============================================================ */
 
-    CREATE TABLE dbo.Flights
+    CREATE TABLE Flights
     (
+        FLIGHT_ID                  INT PRIMARY KEY IDENTITY(1,1),
+        [YEAR]                     INT NOT NULL,
+        [MONTH]                    INT NOT NULL,
         [QUARTER]                  INT,
-        [DAY_OF_MONTH]             INT,
+        [DAY_OF_MONTH]             INT NOT NULL,
         [DAY_OF_WEEK]              INT,
-        [FLIGHT_DATE]              DATE,
-        [REPORTING_AIRLINE]        VARCHAR(10),
-        [DOT_ID_REPORTING_AIRLINE] INT,
-        [ORIGIN_AIRPORT_ID]        INT,
-        [ORIGIN]                   VARCHAR(10),
+        [FLIGHT_DATE]              DATE NOT NULL,
+        [REPORTING_AIRLINE]        VARCHAR(10) NOT NULL,
+        [DOT_ID_REPORTING_AIRLINE] INT NOT NULL,
+        [ORIGIN_AIRPORT_ID]        INT NOT NULL,
+        [ORIGIN]                   VARCHAR(10) NOT NULL,
         [ORIGIN_CITY_NAME]         VARCHAR(100),
         [ORIGIN_STATE]              VARCHAR(10),
         [ORIGIN_STATE_NAME]        VARCHAR(100),
@@ -40,7 +47,7 @@ BEGIN TRY
         [CRS_ARR_TIME]             INT,
         [ARR_TIME]                 INT,
         [ARR_DELAY]                DECIMAL(10, 2),
-        [CANCELLED]                DECIMAL(10, 2),
+        [CANCELLED]                DECIMAL(10, 2) NOT NULL,
         [CANCELLATION_CODE]        VARCHAR(10),
         [CRS_ELAPSED_TIME]         DECIMAL(10, 2),
         [ACTUAL_ELAPSED_TIME]      DECIMAL(10, 2),
@@ -58,9 +65,7 @@ BEGIN TRY
         [DIV_ARR_DELAY]            DECIMAL(10, 2),
         [DIV_DISTANCE]             DECIMAL(12, 2),
         [LATITUDE]                 DECIMAL(10, 6),
-        [LONGITUDE]                DECIMAL(10, 6),
-        [YEAR]                     INT,
-        [MONTH]                    INT
+        [LONGITUDE]                DECIMAL(10, 6)
     );
 
 
@@ -68,22 +73,27 @@ BEGIN TRY
        Table: Passengers
        ============================================================ */
 
-    CREATE TABLE dbo.Passengers
+    CREATE TABLE Passengers
     (
+        
+        [SEGMENT_PASSENGERS_ID]  INT PRIMARY KEY IDENTITY(1,1),
+        [YEAR]                   INT NOT NULL,
+        [MONTH]                  INT NOT NULL,
+        [QUARTER]                INT,
         [DEPARTURES_SCHEDULED]   DECIMAL(12, 2),
-        [DEPARTURES_PERFORMED]   DECIMAL(12, 2),
+        [DEPARTURES_PERFORMED]   DECIMAL(12, 2) NOT NULL,
         [PAYLOAD]                DECIMAL(18, 2),
         [SEATS]                  DECIMAL(12, 2),
-        [PASSENGERS]             DECIMAL(12, 2),
+        [PASSENGERS]             DECIMAL(12, 2) NOT NULL,
         [FREIGHT]                DECIMAL(18, 2),
         [MAIL]                   DECIMAL(18, 2),
         [DISTANCE]               DECIMAL(12, 2),
         [AIR_TIME]               DECIMAL(12, 2),
-        [UNIQUE_CARRIER]         VARCHAR(10),
-        [AIRLINE_ID]             INT,
+        [UNIQUE_CARRIER]         VARCHAR(10) NOT NULL,
+        [AIRLINE_ID]             INT NOT NULL,
         [CARRIER_NAME]           VARCHAR(200),
-        [ORIGIN_AIRPORT_ID]      INT,
-        [ORIGIN]                 VARCHAR(10),
+        [ORIGIN_AIRPORT_ID]      INT NOT NULL,
+        [ORIGIN]                 VARCHAR(10) NOT NULL,
         [ORIGIN_CITY_NAME]       VARCHAR(100),
         [ORIGIN_STATE_ABR]       VARCHAR(10),
         [ORIGIN_STATE_NM]        VARCHAR(100),
@@ -92,10 +102,7 @@ BEGIN TRY
         [DEST_CITY_NAME]         VARCHAR(100),
         [DEST_STATE_ABR]         VARCHAR(10),
         [DEST_STATE_NM]          VARCHAR(100),
-        [QUARTER]                INT,
         [DISTANCE_GROUP]         INT,
-        [YEAR]                   INT,
-        [MONTH]                  INT
     );
 
 
@@ -103,16 +110,16 @@ BEGIN TRY
        Table: Runways
        ============================================================ */
 
-    CREATE TABLE dbo.Runways
+    CREATE TABLE Runways
     (
-        [OID]           INT PRIMARY KEY,
-        [STATE_CODE]    VARCHAR(10),
-        [ARPT_ID]       VARCHAR(20),
+        [OID]           INT PRIMARY KEY IDENTITY(1,1),
+        [STATE_CODE]    VARCHAR(10) NOT NULL,
+        [ARPT_ID]       VARCHAR(20) NOT NULL,
         [ARPT_NAME]     VARCHAR(200),
         [CITY]          VARCHAR(100),
         [COUNTRY_CODE]  VARCHAR(10),
-        [LATITUDE]      DECIMAL(10, 6),
-        [LONGITUDE]     DECIMAL(10, 6)
+        [LATITUDE]      DECIMAL(10, 6) NOT NULL,
+        [LONGITUDE]     DECIMAL(10, 6) NOT NULL
     );
 
 
@@ -127,23 +134,4 @@ BEGIN CATCH
     THROW;
 
 END CATCH;
-GO
-
-
-
-/* ============================================================
-   Table: Runways
-   ============================================================ */
-
-CREATE TABLE dbo.Runways
-(
-    OID           INT PRIMARY KEY,
-    STATE_CODE    VARCHAR(10),
-    ARPT_ID       VARCHAR(20),
-    ARPT_NAME     VARCHAR(200),
-    CITY          VARCHAR(100),
-    COUNTRY_CODE  VARCHAR(10),
-    LATITUDE      DECIMAL(10,6),
-    LONGITUDE     DECIMAL(10,6)
-);
 GO
