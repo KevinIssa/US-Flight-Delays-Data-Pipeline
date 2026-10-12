@@ -1,4 +1,4 @@
-from config import *
+from Scripts.Python.webscrap_config import *
 import zipfile
 import re
 

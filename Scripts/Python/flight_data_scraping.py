@@ -1,7 +1,7 @@
 from pathlib import Path
 from urllib.request import Request, urlopen, urlretrieve
 from urllib.parse import urljoin
-from config import *
+from Scripts.Python.webscrap_config import *
 import re
 # Page contenant tous les ZIP TranStats
 BASE_URL = "https://transtats.bts.gov/PREZIP/"
