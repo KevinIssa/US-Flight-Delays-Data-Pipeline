@@ -9,7 +9,6 @@ sql_third_table = os.getenv("SQL_SERVER_THIRD_TABLE")
 sql_server_url = (
     "jdbc:sqlserver://ICT-210-05;"
     "databaseName=StagingSilver;"
-    "integratedSecurity=true;"
     "encrypt=true;"
     "trustServerCertificate=true;"
 )

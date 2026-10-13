@@ -1,4 +1,3 @@
-
 def insert_into_first_table(df_flights_silver, sql_server_url, sql_table):
 
     (

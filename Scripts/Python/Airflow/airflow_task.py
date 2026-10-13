@@ -1,18 +1,21 @@
-import os
+import os, sys
 
 from airflow.sdk import task
 from dotenv import load_dotenv
 from pyspark.sql import SparkSession
+from pathlib import Path
 
+PYTHON_PATH = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(PYTHON_PATH))
 from Constants import *
 
-from Scripts.Python.Scraping.flight_data_scraping import download_transtats_zip_files
-from Scripts.Python.Scraping.extract_zip_files import extract_flight_zip_files
-from Scripts.Python.df_bronze_setup import *
-from Scripts.Python.df_transformations import *
-from Scripts.Python.df_silver_setup import *
-from Scripts.Python.create_parquet_files import *
-from Scripts.Python.insert_into_sql_server import *
+from Scraping.flight_data_scraping import download_transtats_zip_files
+from Scraping.extract_zip_files import extract_flight_zip_files
+from df_bronze_setup import *
+from df_transformations import *
+from df_silver_setup import *
+from create_parquet_files import *
+from insert_into_sql_server import *
 # Constantes partagees entre les tasks.
 
 first_columns = ["YEAR", "MONTH", "QUARTER"]

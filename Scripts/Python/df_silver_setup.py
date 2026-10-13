@@ -1,4 +1,3 @@
-
 def read_flights_parquet(spark, flight_silver_path):
 
     df_flights_silver = spark.read.parquet(flight_silver_path.as_posix())

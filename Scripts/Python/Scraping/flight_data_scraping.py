@@ -1,7 +1,7 @@
 from pathlib import Path
 from urllib.request import Request, urlopen, urlretrieve
 from urllib.parse import urljoin
-from Scripts.Python.Scraping.webscrap_config import *
+from Scraping.webscrap_config import *
 import re
 
 

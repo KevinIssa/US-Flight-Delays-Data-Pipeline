@@ -1,4 +1,4 @@
-from Scripts.Python.Scraping.webscrap_config import *
+from Scraping.webscrap_config import *
 import zipfile
 import re
 

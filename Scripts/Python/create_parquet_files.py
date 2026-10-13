@@ -1,4 +1,3 @@
-
 def create_flights_parquet(df_flights, flight_silver_path):
 
     df_flights = df_flights.repartition("YEAR", "MONTH")
