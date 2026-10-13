@@ -1,3 +1,8 @@
+from Constants import (COLUMNS_TO_KEEP_FLIGHTS,
+    COLUMNS_TO_KEEP_PASSENGERS,
+    COLUMNS_TO_KEEP_AIRPORTS
+)
+
 def get_flight_files(flight_folder_path):
     
     flight_files = [

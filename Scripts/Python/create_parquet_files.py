@@ -19,3 +19,13 @@ def create_passengers_parquet(df_passengers, passengers_silver_path):
         .partitionBy("YEAR", "MONTH")
         .parquet(passengers_silver_path.as_posix())
     )
+
+def create_runways_parquet(df_runways, runways_silver_path):
+
+    df_runways = df_runways.repartition("OID")
+
+    (df_runways.write
+        .mode("overwrite")
+        .partitionBy("OID")
+        .parquet(runways_silver_path.as_posix())
+    )

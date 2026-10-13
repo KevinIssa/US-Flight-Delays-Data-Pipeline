@@ -9,3 +9,4 @@ Data/Silver/Flights/_SUCCESS
 Data/Silver/Passengers/_SUCCESS
 *.html
 .env
+/.venv

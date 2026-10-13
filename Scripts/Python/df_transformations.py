@@ -1,5 +1,7 @@
 import pyspark.sql.functions as F
-
+from Constants import (FLIGHT_COLUMN_MAPPING,
+                       FLIGHT_SCHEMA,
+                       PASSENGERS_SCHEMA)
 
 def df_flights_transformations(df_flights):
 
@@ -12,7 +14,7 @@ def df_flights_transformations(df_flights):
     third_condition = F.col("CANCELLED") == 1.00
 
     df_flights = df_flights.filter(third_condition | ~(first_condition & second_condition))
-
+    
     return df_flights
 
 def df_passengers_transformations(df_passengers):
@@ -44,3 +46,29 @@ def join_df_flights_and_runways(df_flights, df_runways):
                                 "inner").select(df_flights["*"], df_runways["LATITUDE"], df_runways["LONGITUDE"])
 
     return df_flights
+
+
+def add_row_hash(df):
+
+    """
+    Ajoute une colonne ROW_HASH contenant un hash SHA-256 pour chaque ligne du DataFrame.
+
+    Le hash est généré à partir de toutes les colonnes, triées par ordre
+    alphabétique pour garantir un ordre constant. Les valeurs sont converties
+    en JSON avant d'être hachées, en incluant explicitement les valeurs nulles.
+
+    Cette colonne permet d'identifier les modifications de données et
+    de comparer les lignes entre différentes versions d'un DataFrame.
+
+    Args:
+        df (DataFrame): DataFrame PySpark à traiter.
+
+    Returns:
+        DataFrame: DataFrame PySpark avec une colonne ROW_HASH supplémentaire.
+    """
+
+    return df.withColumn("ROW_HASH",
+                          F.sha2(
+                              F.to_json(
+                                   F.struct(*[F.col(c) for c in sorted(df.columns)]), 
+                                   {"ignoreNullFields": "false"}),  256))
