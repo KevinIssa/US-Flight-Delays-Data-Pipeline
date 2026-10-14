@@ -5,9 +5,7 @@
 .vscode/settings.json
 *.crc
 *.parquet
-Data/Silver/Flights/_SUCCESS
-Data/Silver/Passengers/_SUCCESS
 *.html
 .env
 /.venv
-/Data/Silver/Runways
+/Data
