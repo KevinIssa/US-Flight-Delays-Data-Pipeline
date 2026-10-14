@@ -9,7 +9,7 @@ BEGIN TRY
     BEGIN TRANSACTION;
     
     DROP TABLE IF EXISTS Flights
-    DROP TABLE IF EXISTS Passengers
+    DROP TABLE IF EXISTS SegmentPassengers
     DROP TABLE IF EXISTS Runways
 
     /* ============================================================
@@ -65,7 +65,8 @@ BEGIN TRY
         [DIV_ARR_DELAY]            DECIMAL(10, 2),
         [DIV_DISTANCE]             DECIMAL(12, 2),
         [LATITUDE]                 DECIMAL(10, 6),
-        [LONGITUDE]                DECIMAL(10, 6)
+        [LONGITUDE]                DECIMAL(10, 6),
+        ROW_HASH                   VARCHAR(65) NOT NULL
     );
 
 
@@ -89,8 +90,8 @@ BEGIN TRY
         [MAIL]                   DECIMAL(18, 2),
         [DISTANCE]               DECIMAL(12, 2),
         [AIR_TIME]               DECIMAL(12, 2),
-        [UNIQUE_CARRIER]         VARCHAR(10) NOT NULL,
-        [AIRLINE_ID]             INT NOT NULL,
+        [UNIQUE_CARRIER]         VARCHAR(10),
+        [AIRLINE_ID]             INT,
         [CARRIER_NAME]           VARCHAR(200),
         [ORIGIN_AIRPORT_ID]      INT NOT NULL,
         [ORIGIN]                 VARCHAR(10) NOT NULL,
@@ -103,6 +104,7 @@ BEGIN TRY
         [DEST_STATE_ABR]         VARCHAR(10),
         [DEST_STATE_NM]          VARCHAR(100),
         [DISTANCE_GROUP]         INT,
+        ROW_HASH                 VARCHAR(65) NOT NULL
     );
 
 
@@ -119,8 +121,25 @@ BEGIN TRY
         [CITY]          VARCHAR(100),
         [COUNTRY_CODE]  VARCHAR(10),
         [LATITUDE]      DECIMAL(10, 6) NOT NULL,
-        [LONGITUDE]     DECIMAL(10, 6) NOT NULL
+        [LONGITUDE]     DECIMAL(10, 6) NOT NULL,
+        ROW_HASH        VARCHAR(65) NOT NULL
     );
+    
+
+    -- 1. Table Flights
+    CREATE UNIQUE INDEX UX_Flights_Hash
+    ON dbo.Flights (ROW_HASH)
+    WITH (IGNORE_DUP_KEY = OFF);
+       
+     -- 2. Table SegmentPassengers
+    CREATE UNIQUE INDEX UX_SegmentPassengers_Hash
+    ON dbo.SegmentPassengers (ROW_HASH)
+    WITH (IGNORE_DUP_KEY = OFF);
+
+    -- 3. Table Runways
+    CREATE UNIQUE INDEX UX_Runways_Hash
+    ON dbo.Runways (ROW_HASH)
+    WITH (IGNORE_DUP_KEY = OFF); 
 
 
     COMMIT TRANSACTION;

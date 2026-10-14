@@ -1,0 +1,9 @@
+COLUMNS_TO_KEEP_AIRPORTS = [
+    "STATE_CODE",
+    "ARPT_ID",
+    "ARPT_NAME",
+    "CITY",
+    "COUNTRY_CODE",
+    "LAT1_DECIMAL",
+    "LONG1_DECIMAL"
+]
