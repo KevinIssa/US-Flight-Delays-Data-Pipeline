@@ -1,7 +1,6 @@
-import os, sys
+import sys
 
 from airflow.sdk import task
-from dotenv import load_dotenv
 from pyspark.sql import SparkSession
 from pathlib import Path
 
@@ -18,7 +17,7 @@ from create_parquet_files import *
 from insert_into_sql_server import *
 # Constantes partagees entre les tasks.
 
-first_columns = ["YEAR", "MONTH", "QUARTER"]
+FIRST_COLUMNS = ["YEAR", "MONTH", "QUARTER"]
 ENV_PATH = Path(__file__).resolve().parents[2] / ".env"
 
 def get_spark():
@@ -41,13 +40,13 @@ def get_spark():
 # DAG 1 : Scraping et extraction ZIP
 # --------------------------------------------------
 
-@task(retries=1)
+@task(retries=0)
 def web_scraping():
 
     download_transtats_zip_files()
 
 
-@task(retries=1)
+@task(retries=0)
 def extract_zip_files():
 
     extract_flight_zip_files()
@@ -62,7 +61,7 @@ Cela pourrait causer des problèmes de mémoire ou de conflits entre les session
 on s'assure que chaque task commence avec un environnement propre et isolé, ce qui améliore la stabilité et la fiabilité du pipeline de données.
 """
 
-@task(retries=1)
+@task(retries=0)
 def prepare_flights_silver():
 
     spark = get_spark()
@@ -87,13 +86,14 @@ def prepare_flights_silver():
     finally:
         spark.stop()
         
-@task(retries=1)
+@task(retries=0)
 def prepare_passengers_silver():
 
     spark = get_spark()
     try:
         passenger_files = get_passenger_files(PASSENGER_BRONZE_PATH)
         df_passengers = read_passengers_csv(spark, passenger_files)
+
         df_passengers = df_passengers_transformations(df_passengers)
         df_passengers = add_row_hash(df_passengers)
 
@@ -108,47 +108,46 @@ def prepare_passengers_silver():
 # --------------------------------------------------
 
 @task(retries=0)
-def insert_flights_sql():
+def insert_flights_to_sql():
 
-    load_dotenv(dotenv_path=ENV_PATH, override=True)
-    sql_table = os.getenv("SQL_SERVER_TABLE")
+    sql_server_url, sql_user, sql_password, sql_table = get_sql_env(sql_table_env_name = "SQL_SERVER_TABLE")
+
 
     spark = get_spark()
     try:
         df_flights_silver = read_flights_parquet(spark, FLIGHT_SILVER_PATH)
-        df_flights_silver = arrange_parquet_columns_flights_silver(df_flights_silver, first_columns)
-        insert_into_first_table(df_flights_silver, sql_server_url, sql_table)
+        df_flights_silver = arrange_parquet_columns_flights_silver(df_flights_silver, FIRST_COLUMNS)
+        insert_into_sql_table(df_flights_silver, spark, sql_server_url, sql_table, sql_user, sql_password)
 
     finally:
         spark.stop()
 
 
 @task(retries=0)
-def insert_passengers_sql():
+def insert_passengers_to_sql():
 
-    load_dotenv(dotenv_path=ENV_PATH, override=True)
-    sql_second_table = os.getenv("SQL_SERVER_SECOND_TABLE")
+    sql_server_url, sql_user, sql_password, sql_second_table = get_sql_env(sql_table_env_name = "SQL_SERVER_SECOND_TABLE")
 
     spark = get_spark()
     try:
         df_passengers_silver = read_passengers_parquet(spark, PASSENGER_SILVER_PATH)
-        df_passengers_silver = arrange_parquet_columns_passengers_silver(df_passengers_silver, first_columns)
-        insert_into_second_table(df_passengers_silver, sql_server_url, sql_second_table)
+        df_passengers_silver = arrange_parquet_columns_passengers_silver(df_passengers_silver, FIRST_COLUMNS)
+        insert_into_sql_table(df_passengers_silver, spark, sql_server_url, sql_second_table, sql_user, sql_password)
 
     finally:
         spark.stop()
 
 
 @task(retries=0)
-def insert_runways_sql():
+def insert_runways_to_sql():
 
-    load_dotenv(dotenv_path=ENV_PATH, override=True)
-    sql_third_table = os.getenv("SQL_SERVER_THIRD_TABLE")
+    sql_server_url, sql_user, sql_password, sql_third_table = get_sql_env(sql_table_env_name ="SQL_SERVER_THIRD_TABLE")
 
     spark = get_spark()
     try:
         df_runways = read_runways_parquet(spark, RUNWAYS_SILVER_PATH)
-        insert_into_third_table(df_runways, sql_server_url, sql_third_table)
+        insert_into_sql_table(df_runways, spark, sql_server_url, sql_third_table, sql_user, sql_password)
 
     finally:
         spark.stop()
+
