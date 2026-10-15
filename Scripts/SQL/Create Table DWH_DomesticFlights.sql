@@ -1,4 +1,4 @@
-USE StagingGold;
+USE DWH_DomesticFlights;
 GO
 
 SET XACT_ABORT ON;
@@ -63,7 +63,6 @@ BEGIN TRY
         [DIV_ACTUAL_ELAPSED_TIME]  DECIMAL(10, 2),
         [DIV_ARR_DELAY]            DECIMAL(10, 2),
         [DIV_DISTANCE]             DECIMAL(12, 2)
-        
     );
 
     /* ============================================================
@@ -73,7 +72,6 @@ BEGIN TRY
     CREATE TABLE Dim_Time
     (
         TIME_OF_THE_DAY            TIME PRIMARY KEY
-
     );
 
     /* ============================================================
@@ -89,7 +87,6 @@ BEGIN TRY
         SNOW_DEPTH                 FLOAT,
         WIND_SPEED_10M             FLOAT,
         WIND_GUSTS_10M             FLOAT
-
     );
 
 
@@ -133,7 +130,6 @@ BEGIN TRY
         [COUNTRY_CODE]  VARCHAR(10),
         [LATITUDE]      DECIMAL(10, 6) NOT NULL,
         [LONGITUDE]     DECIMAL(10, 6) NOT NULL
-
     );
 
     /* ============================================================
@@ -142,7 +138,6 @@ BEGIN TRY
 
     CREATE TABLE Fact_Passengers
     (
-        
         [SEGMENT_PASSENGERS_ID]  INT PRIMARY KEY,
         [FK_ORIGIN_AIRPORT_ID]   INT NOT NULL,
         [FK_DEST_AIRPORT_ID]     INT,
