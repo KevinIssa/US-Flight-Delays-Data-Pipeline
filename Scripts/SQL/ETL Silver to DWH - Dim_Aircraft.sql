@@ -6,8 +6,7 @@ BEGIN TRY
 
     INSERT INTO dbo.Dim_Aircraft
     (
-       [AIRCRAFT_ID]
-      ,[FK_AIRLINE_ID]
+       [FK_AIRLINE_ID]
       ,[UNIQUE_CARRIER]
       ,[CARRIER_NAME]
       ,[PAYLOAD]
@@ -18,9 +17,16 @@ BEGIN TRY
     )
     SELECT Top(1000)
 
-        
+       [AIRLINE_ID]
+      ,[UNIQUE_CARRIER]
+      ,[CARRIER_NAME]
+      ,[PAYLOAD]
+      ,[SEATS]
+      ,[PASSENGERS]
+      ,[FREIGHT]
+      ,[MAIL]
 
-    FROM 
+    FROM StagingSilver.dbo.SegmentPassengers
 
     WHERE NOT EXISTS(
     SELECT 1 FROM DWH_DomesticFlights.dbo.Dim_Aircraft AS FI
