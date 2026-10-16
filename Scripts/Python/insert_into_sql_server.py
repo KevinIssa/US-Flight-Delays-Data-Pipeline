@@ -10,12 +10,13 @@ def get_sql_env(sql_table_env_name):
 
     load_dotenv(dotenv_path=ENV_PATH, override=True)
     
-    sql_server_url = os.getenv("SQL_SERVER_URL")
+    sql_staging_url = os.getenv("SQL_STAGING_URL")
     sql_user = os.getenv("SQL_SERVER_USER")
     sql_password = os.getenv("SQL_SERVER_PASSWORD")
+    sql_dwh_url = os.getenv("SQL_DWH_URL")
     sql_table = os.getenv(sql_table_env_name)
 
-    return sql_server_url, sql_user, sql_password, sql_table
+    return sql_staging_url, sql_dwh_url, sql_user, sql_password, sql_table
 
 
 def get_existing_rows(spark,  sql_server_url, sql_table, sql_user, sql_password):
@@ -57,7 +58,7 @@ def insert_into_sql_table(df, spark, sql_server_url, sql_table, sql_user, sql_pa
     )
 
 
-def execute_sql_file(spark, file_path, jdbc_url, user, password):
+def execute_sql_file(spark, file_path, sql_server_url, user, password):
 
     # Lire le fichier SQL
     sql = Path(file_path).read_text(encoding="utf-8-sig")
@@ -73,7 +74,7 @@ def execute_sql_file(spark, file_path, jdbc_url, user, password):
     properties.setProperty("password", password)
 
     driver = jvm.com.microsoft.sqlserver.jdbc.SQLServerDriver()
-    connection = driver.connect(jdbc_url, properties)
+    connection = driver.connect(sql_server_url, properties)
 
     if connection is None:
         raise RuntimeError("Connexion JDBC impossible")
@@ -81,7 +82,7 @@ def execute_sql_file(spark, file_path, jdbc_url, user, password):
     statement = None
 
     try:
-        connection.setAutoCommit(True)
+        connection.setAutoCommit(False)
         statement = connection.createStatement()
 
         for batch in batches:
@@ -104,6 +105,8 @@ def execute_sql_file(spark, file_path, jdbc_url, user, password):
         print(f"Script exécuté : {file_path}")
 
     finally:
-        if statement is not None:
-            statement.close()
-        connection.close()
+        try:
+            if statement is not None:
+                statement.close()
+        finally:
+            connection.close()

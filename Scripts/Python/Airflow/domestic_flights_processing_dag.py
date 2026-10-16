@@ -94,5 +94,5 @@ def load_fact_tables():
 bronze_to_silver_processing_dag()
 data_scraping_processing_dag()
 insert_data_to_sql_dag()
-load_dim_tables()
-load_fact_tables()
+#load_dim_tables()
+#load_fact_tables()

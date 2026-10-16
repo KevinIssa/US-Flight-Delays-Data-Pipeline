@@ -111,14 +111,14 @@ def prepare_passengers_silver():
 @task(retries=0)
 def insert_flights_to_sql():
 
-    sql_server_url, sql_user, sql_password, sql_table = get_sql_env(sql_table_env_name = "SQL_SERVER_TABLE")
+    sql_staging_url, sql_dwh_url, sql_user, sql_password, sql_table = get_sql_env(sql_table_env_name = "SQL_SERVER_TABLE")
 
 
     spark = get_spark()
     try:
         df_flights_silver = read_flights_parquet(spark, FLIGHT_SILVER_PATH)
         df_flights_silver = arrange_parquet_columns_flights_silver(df_flights_silver, FIRST_COLUMNS)
-        insert_into_sql_table(df_flights_silver, spark, sql_server_url, sql_table, sql_user, sql_password)
+        insert_into_sql_table(df_flights_silver, spark, sql_staging_url, sql_table, sql_user, sql_password)
 
     finally:
         spark.stop()
@@ -127,13 +127,13 @@ def insert_flights_to_sql():
 @task(retries=0)
 def insert_passengers_to_sql():
 
-    sql_server_url, sql_user, sql_password, sql_second_table = get_sql_env(sql_table_env_name = "SQL_SERVER_SECOND_TABLE")
+    sql_staging_url, sql_dwh_url, sql_user, sql_password, sql_second_table = get_sql_env(sql_table_env_name = "SQL_SERVER_SECOND_TABLE")
 
     spark = get_spark()
     try:
         df_passengers_silver = read_passengers_parquet(spark, PASSENGER_SILVER_PATH)
         df_passengers_silver = arrange_parquet_columns_passengers_silver(df_passengers_silver, FIRST_COLUMNS)
-        insert_into_sql_table(df_passengers_silver, spark, sql_server_url, sql_second_table, sql_user, sql_password)
+        insert_into_sql_table(df_passengers_silver, spark, sql_staging_url, sql_second_table, sql_user, sql_password)
 
     finally:
         spark.stop()
@@ -142,12 +142,12 @@ def insert_passengers_to_sql():
 @task(retries=0)
 def insert_runways_to_sql():
 
-    sql_server_url, sql_user, sql_password, sql_third_table = get_sql_env(sql_table_env_name ="SQL_SERVER_THIRD_TABLE")
+    sql_staging_url, sql_dwh_url, sql_user, sql_password, sql_third_table = get_sql_env(sql_table_env_name ="SQL_SERVER_THIRD_TABLE")
 
     spark = get_spark()
     try:
         df_runways = read_runways_parquet(spark, RUNWAYS_SILVER_PATH)
-        insert_into_sql_table(df_runways, spark, sql_server_url, sql_third_table, sql_user, sql_password)
+        insert_into_sql_table(df_runways, spark, sql_staging_url, sql_third_table, sql_user, sql_password)
 
     finally:
         spark.stop()
@@ -157,17 +157,13 @@ def insert_runways_to_sql():
 def load_dim_tables():
 
     spark = get_spark()
+    sql_files = [ "Dim_Time.sql","Dim_Airline.sql", "Dim_Airport.sql", "Dim_Aircraft.sql", "Dim_Date_Flights.sql", "Dim_Date_Passengers.sql"]
 
     try:
-        sql_server_url, jdbc_user, jdbc_password = get_sql_env(sql_table_env_name = "SQL_SERVER_TABLE")
+        sql_staging_url, sql_dwh_url, sql_user, sql_password = get_sql_env(sql_table_env_name = "SQL_DWH_URL")
 
-        execute_sql_file(
-            spark,
-            f"{SQL_ETL_FOLDER}/Dim_Airline.sql",
-            sql_server_url,
-            jdbc_user,
-            jdbc_password
-        )
+        for sql_file in sql_files:
+            execute_sql_file(spark, f"{SQL_ETL_FOLDER}/{sql_file}", sql_dwh_url, sql_user, sql_password)
 
     finally:
         spark.stop()
@@ -177,17 +173,13 @@ def load_dim_tables():
 def load_fact_tables():
 
     spark = get_spark()
+    sql_files = ["Fact_Flights.sql", "Fact_Passengers.sql"]
 
     try:
-        sql_server_url, jdbc_user, jdbc_password = get_sql_env(sql_table_env_name = "SQL_SERVER_TABLE")
+        sql_staging_url, sql_dwh_url, jdbc_user, jdbc_password = get_sql_env(sql_table_env_name = "SQL_DWH_URL")
 
-        execute_sql_file(
-            spark,
-            f"{SQL_ETL_FOLDER}/Fact_Flights.sql",
-            sql_server_url,
-            jdbc_user,
-            jdbc_password
-        )
+        for sql_file in sql_files:
+                    execute_sql_file(spark, f"{SQL_ETL_FOLDER}/{sql_file}", sql_dwh_url, jdbc_user, jdbc_password)
 
     finally:
         spark.stop()
