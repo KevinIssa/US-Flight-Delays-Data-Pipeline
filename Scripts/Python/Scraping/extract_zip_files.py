@@ -5,7 +5,7 @@ import re
 
 def extract_flight_zip_files():
 
-    for zip_path in OUTPUT_DIR.glob("*.zip"):
+    for zip_path in FLIGHT_BRONZE_PATH.glob("*.zip"):
 
         print(f"Extraction : {zip_path.name}")
 
@@ -24,7 +24,7 @@ def extract_flight_zip_files():
 
                 year = match.group(1)
                 month = match.group(2).zfill(2)
-                destination = OUTPUT_DIR / new_name
+                destination = FLIGHT_BRONZE_PATH / new_name
                 # Nouveau nom : YYYY_MM.csv
                 new_name = f"{year}_{month}.csv"
 

@@ -1,26 +1,30 @@
 USE DWH_DomesticFlights;
 GO
 
-
 BEGIN TRY
     BEGIN TRANSACTION;
 
     INSERT INTO dbo.Dim_Date_Passengers
     (
-       [YEAR_MONTH]
-      ,[YEAR]
-      ,[MONTH]
-      ,[QUARTER]
+        [YEAR],
+        [MONTH],
+        [QUARTER]
     )
-    SELECT Top(1000)
+    SELECT DISTINCT TOP (1000)
+        SP.[YEAR],
+        SP.[MONTH],
+        SP.[QUARTER]
 
-        
+    FROM StagingSilver.dbo.SegmentPassengers AS SP
 
-    FROM 
-
-    WHERE NOT EXISTS(
-    SELECT 1 FROM DWH_DomesticFlights.dbo.Dim_Date_Passengers AS FI
-    WHERE FI.InvoiceLineId = IL.InvoiceLineId)
+    WHERE SP.[YEAR] IS NOT NULL
+      AND SP.[MONTH] IS NOT NULL
+      AND NOT EXISTS (
+        SELECT 1
+        FROM dbo.Dim_Date_Passengers AS DP
+        WHERE DP.[YEAR] = SP.[YEAR]
+          AND DP.[MONTH] = SP.[MONTH]
+    );
 
     COMMIT TRANSACTION;
     PRINT 'Chargement Dim_Date_Passengers termine avec succes.';
@@ -35,4 +39,5 @@ BEGIN CATCH
     THROW;
 END CATCH;
 GO
+
 

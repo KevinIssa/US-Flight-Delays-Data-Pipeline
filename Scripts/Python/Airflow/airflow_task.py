@@ -30,6 +30,7 @@ def get_spark():
         .appName("DomesticFlightDelays")
         .config("spark.sql.adaptive.enabled", "true")
         .config("spark.sql.shuffle.partitions", "64")
+        #.config("spark.local.dir", "SparkTemp") #choisir où spark doit stocker ses fichiers temporaires sur le disque
         .config("spark.driver.extraClassPath", str(JDBC_DRIVER_PATH))
         .getOrCreate()
     )

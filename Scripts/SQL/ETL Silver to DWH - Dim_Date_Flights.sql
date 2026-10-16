@@ -6,30 +6,29 @@ BEGIN TRY
 
     INSERT INTO dbo.Dim_Date_Flights
     (
-       [YEAR_MONTH]
-      ,[FLIGHT_DATE]
-      ,[YEAR]
-      ,[MONTH]
-      ,[QUARTER]
-      ,[DAY_OF_MONTH]
-      ,[DAY_OF_WEEK]
+        FLIGHT_DATE,
+        [YEAR],
+        [MONTH],
+        [QUARTER],
+        DAY_OF_MONTH,
+        DAY_OF_WEEK
     )
-    SELECT Top(1000)
+    SELECT DISTINCT TOP (1000)
+        F.FLIGHT_DATE,
+        F.[YEAR],
+        F.[MONTH],
+        F.[QUARTER],
+        F.DAY_OF_MONTH,
+        F.DAY_OF_WEEK
 
-        CONCAT("YEAR"+"MONTH)
-       ,[FLIGHT_DATE]
-       ,[YEAR]
-       ,[MONTH]
-       ,[QUARTER]
-       ,[DAY_OF_MONTH]
-       ,[DAY_OF_WEEK]
-        
+    FROM StagingSilver.dbo.Flights AS F
 
-    FROM StagingSilver.dbo.Flights
-
-    WHERE NOT EXISTS(
-    SELECT 1 FROM DWH_DomesticFlights.dbo.Dim_Date_Flights AS FI
-    WHERE FI.InvoiceLineId = IL.InvoiceLineId)
+    WHERE F.FLIGHT_DATE IS NOT NULL
+      AND NOT EXISTS (
+        SELECT 1
+        FROM dbo.Dim_Date_Flights AS DF
+        WHERE DF.FLIGHT_DATE = F.FLIGHT_DATE
+    );
 
     COMMIT TRANSACTION;
     PRINT 'Chargement Dim_Date_Flights termine avec succes.';
@@ -44,3 +43,4 @@ BEGIN CATCH
     THROW;
 END CATCH;
 GO
+

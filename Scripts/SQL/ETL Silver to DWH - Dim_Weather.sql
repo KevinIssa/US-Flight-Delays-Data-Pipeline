@@ -6,14 +6,15 @@ BEGIN TRY
 
     INSERT INTO dbo.Dim_Weather
     (
-       [CALL_API_ID]
-      ,[TEMPERATURE]
-      ,[SNOWFALL]
-      ,[RAIN]
-      ,[SNOW_DEPTH]
-      ,[WIND_SPEED_10M]
-      ,[WIND_GUSTS_10M]
+       CALL_API_ID,
+       TEMPERATURE,
+       SNOWFALL,
+       RAIN,
+       SNOW_DEPTH,
+       WIND_SPEED_10M,
+       WIND_GUSTS_10M,
     )
+
     SELECT Top(1000)
 
         
@@ -21,7 +22,7 @@ BEGIN TRY
     FROM 
 
     WHERE NOT EXISTS(
-    SELECT 1 FROM DWH_DomesticFlights.dbo.Dim_Weather AS FI
+    SELECT 1 FROM DWH_DomesticFlights.dbo.Dim_Weather AS DW
     WHERE FI.InvoiceLineId = IL.InvoiceLineId)
 
     COMMIT TRANSACTION;

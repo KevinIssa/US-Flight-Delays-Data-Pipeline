@@ -6,24 +6,56 @@ BEGIN TRY
 
     INSERT INTO dbo.Fact_Passengers
     (
-       [SEGMENT_PASSENGERS_ID]
-      ,[FK_ORIGIN_AIRPORT_ID]
-      ,[FK_DEST_AIRPORT_ID]
-      ,[DEPARTURES_SCHEDULED]
-      ,[DEPARTURES_PERFORMED]
-      ,[DISTANCE]
-      ,[AIR_TIME]
-      ,[DISTANCE_GROUP]
+        DATE_ID,
+        ORIGIN_AIRPORT_ID,
+        DEST_AIRPORT_ID,
+        AIRCRAFT_ID,
+        PASSENGERS,
+        FREIGHT,
+        MAIL,
+        DEPARTURES_SCHEDULED,
+        DEPARTURES_PERFORMED,
+        DISTANCE,
+        AIR_TIME,
+        DISTANCE_GROUP
     )
-    SELECT Top(1000)
+    SELECT TOP (1000)
+        DP.DATE_ID,
+        DAIR.AIRPORT_ID,
+        DA.AIRPORT_ID,
+        AC.AIRCRAFT_ID,
+        SP.PASSENGERS,
+        SP.FREIGHT,
+        SP.MAIL,
+        SP.DEPARTURES_SCHEDULED,
+        SP.DEPARTURES_PERFORMED,
+        SP.DISTANCE,
+        SP.AIR_TIME,
+        SP.DISTANCE_GROUP
 
-        
+    FROM StagingSilver.dbo.SegmentPassengers AS SP
 
-    FROM 
+    INNER JOIN dbo.Dim_Date_Passengers AS DP
+        ON DP.[YEAR] = SP.[YEAR]
+       AND DP.[MONTH] = SP.[MONTH]
 
-    WHERE NOT EXISTS(
-    SELECT 1 FROM DWH_DomesticFlights.dbo.Fact_Passengers AS FI
-    WHERE FI.InvoiceLineId = IL.InvoiceLineId)
+    INNER JOIN dbo.Dim_Airport AS DAIR
+        ON DAIR.ORIGIN = SP.ORIGIN
+
+    LEFT JOIN dbo.Dim_Airport AS DA
+        ON DA.ORIGIN = SP.DEST
+
+    INNER JOIN dbo.Dim_Aircraft AS AC
+        ON AC.DOT_ID_Reporting_Airline = SP.AIRLINE_ID
+       AND AC.UNIQUE_CARRIER = SP.UNIQUE_CARRIER
+       AND AC.PAYLOAD IS NOT DISTINCT FROM SP.PAYLOAD
+       AND AC.SEATS IS NOT DISTINCT FROM SP.SEATS
+
+    WHERE NOT EXISTS (
+        SELECT 1
+        FROM dbo.Fact_Passengers AS FP
+        WHERE FP.SEGMENT_PASSENGERS_ID = SP.SEGMENT_PASSENGERS_ID
+    );
 
     COMMIT TRANSACTION;
     PRINT 'Chargement Fact_Passengers termine avec succes.';

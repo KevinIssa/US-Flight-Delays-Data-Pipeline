@@ -10,7 +10,7 @@ def download_transtats_zip_files():
     BASE_URL = "https://transtats.bts.gov/PREZIP/"
 
     # Dossier où tous les ZIP seront téléchargés
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    FLIGHT_BRONZE_PATH.mkdir(parents=True, exist_ok=True)
 
 
     # --------------------------------------------------
