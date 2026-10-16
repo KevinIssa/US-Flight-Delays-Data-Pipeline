@@ -29,6 +29,14 @@ def get_runways_files(runways_folder_path):
 
     return runways_files
 
+def get_sql_files(sql_etl_folder_path):
+
+    sql_files = [
+        file.as_posix()
+        for file in sql_etl_folder_path.glob("*.sql")
+    ]
+
+    return sql_files
 
 def read_flight_csv(spark, flight_files):
 

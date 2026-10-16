@@ -21,9 +21,10 @@ sys.path.insert(0, str(AIRFLOW_PATH))
 
 def data_scraping_processing_dag():
 
-    web_scraping() >> extract_zip_files() 
+    web_scraping_task = web_scraping()
+    extract_zip_files_task = extract_zip_files()
 
-
+    web_scraping_task >> extract_zip_files_task
 
 @dag(
     dag_id="Domestic-Flights-Bronze-To-Silver-DAG",
@@ -60,7 +61,38 @@ def insert_data_to_sql_dag():
 
     runways_to_sql >> passengers_to_sql >> flights_to_sql
 
+@dag(
+    dag_id="Domestic-Flights-load-Dim-Tables-DAG",
+    start_date=datetime(2026, 1, 1, tzinfo=timezone.utc),
+    schedule=None,
+    catchup=False,
+    max_active_runs=1,
+    tags=["domestic Flights", "etl", "sql-server", "sql"]
+)
+
+def load_dim_tables():
+
+    dim_table_load = load_dim_tables()
+
+    dim_table_load
+
+@dag(
+    dag_id="Domestic-Flights-load-Fact-Tables-DAG",
+    start_date=datetime(2026, 1, 1, tzinfo=timezone.utc),
+    schedule=None,
+    catchup=False,
+    max_active_runs=1,
+    tags=["domestic Flights", "etl", "sql-server", "sql"]
+)
+
+def load_fact_tables():
+
+    fact_table_load = load_fact_tables()
+
+    fact_table_load
 
 bronze_to_silver_processing_dag()
 data_scraping_processing_dag()
 insert_data_to_sql_dag()
+load_dim_tables()
+load_fact_tables()

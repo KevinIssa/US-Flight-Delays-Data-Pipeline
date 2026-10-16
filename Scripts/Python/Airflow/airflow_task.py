@@ -152,3 +152,42 @@ def insert_runways_to_sql():
     finally:
         spark.stop()
 
+
+@task(retries=0)
+def load_dim_tables():
+
+    spark = get_spark()
+
+    try:
+        sql_server_url, jdbc_user, jdbc_password = get_sql_env(sql_table_env_name = "SQL_SERVER_TABLE")
+
+        execute_sql_file(
+            spark,
+            f"{SQL_ETL_FOLDER}/Dim_Airline.sql",
+            sql_server_url,
+            jdbc_user,
+            jdbc_password
+        )
+
+    finally:
+        spark.stop()
+
+
+@task(retries=0)
+def load_fact_tables():
+
+    spark = get_spark()
+
+    try:
+        sql_server_url, jdbc_user, jdbc_password = get_sql_env(sql_table_env_name = "SQL_SERVER_TABLE")
+
+        execute_sql_file(
+            spark,
+            f"{SQL_ETL_FOLDER}/Fact_Flights.sql",
+            sql_server_url,
+            jdbc_user,
+            jdbc_password
+        )
+
+    finally:
+        spark.stop()
