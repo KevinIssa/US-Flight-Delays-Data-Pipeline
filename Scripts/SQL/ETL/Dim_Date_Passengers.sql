@@ -24,7 +24,7 @@ BEGIN TRY
         FROM dbo.Dim_Date_Passengers AS DP
         WHERE DP.[YEAR] = SP.[YEAR]
           AND DP.[MONTH] = SP.[MONTH]
-    );
+     )
 
     COMMIT TRANSACTION;
     PRINT 'Chargement Dim_Date_Passengers termine avec succes.';

@@ -41,7 +41,6 @@ def insert_into_sql_table(df, spark, sql_server_url, sql_table, sql_user, sql_pa
     exisiting_rows_df = get_existing_rows(spark, sql_server_url, sql_table, sql_user, sql_password)
 
     new_rows_df = df.join(exisiting_rows_df, on="ROW_HASH", how="left_anti")
-    new_rows_df = new_rows_df.repartition(250)
 
     (
         new_rows_df.write
@@ -51,8 +50,8 @@ def insert_into_sql_table(df, spark, sql_server_url, sql_table, sql_user, sql_pa
             .option("driver", "com.microsoft.sqlserver.jdbc.SQLServerDriver")
             .option("user", sql_user)
             .option("password", sql_password)
-            .option("batchsize", "10000")
-            .option("numPartitions", "250")
+            .option("batchsize", "25000")
+            .option("numPartitions", "60")
             .mode("append")
             .save()
     )
@@ -82,7 +81,7 @@ def execute_sql_file(spark, file_path, sql_server_url, user, password):
     statement = None
 
     try:
-        connection.setAutoCommit(False)
+        connection.setAutoCommit(True)
         statement = connection.createStatement()
 
         for batch in batches:
@@ -101,8 +100,6 @@ def execute_sql_file(spark, file_path, sql_server_url, user, password):
                     break
 
                 has_result = statement.getMoreResults()
-
-        print(f"Script exécuté : {file_path}")
 
     finally:
         try:

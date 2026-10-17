@@ -29,6 +29,15 @@ def get_runways_files(runways_folder_path):
 
     return runways_files
 
+def get_weather_files(weather_folder_path):
+
+    weather_files = [
+        file.as_posix()
+        for file in weather_folder_path.glob("*.csv")
+    ]
+
+    return weather_files
+
 def get_sql_files(sql_etl_folder_path):
 
     sql_files = [
@@ -67,3 +76,9 @@ def read_runways_csv(spark, runways_files):
     df_runways = spark.read.csv(runways_files, inferSchema= True, header= True).select(COLUMNS_TO_KEEP_AIRPORTS)
 
     return df_runways
+
+def read_weather_csv(spark, weather_files):
+    
+    df_weather = spark.read.csv(weather_files, inferSchema= True, header= True)
+
+    return df_weather

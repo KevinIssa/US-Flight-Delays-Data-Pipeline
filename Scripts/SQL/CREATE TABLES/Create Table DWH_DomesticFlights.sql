@@ -10,7 +10,6 @@ BEGIN TRY
        
     DROP TABLE IF EXISTS Fact_Flights
     DROP TABLE IF EXISTS Fact_Passengers
-    DROP TABLE IF EXISTS Dim_Aircraft
     DROP TABLE IF EXISTS Dim_Time
     DROP TABLE IF EXISTS Dim_Weather
     DROP TABLE IF EXISTS Dim_Date_Flights
@@ -32,15 +31,20 @@ BEGIN TRY
        Table: Dim_Weather
        ============================================================ */
 
-    CREATE TABLE Dim_Weather
+    CREATE TABLE dbo.Dim_Weather
     (
-        CALL_API_ID                INT PRIMARY KEY IDENTITY(1,1),
-        TEMPERATURE                FLOAT,
-        SNOWFALL                   FLOAT,
-        RAIN                       FLOAT,
-        SNOW_DEPTH                 FLOAT,
-        WIND_SPEED_10M             FLOAT,
-        WIND_GUSTS_10M             FLOAT
+        CALL_API_ID INT PRIMARY KEY,
+        HOUR_ID TINYINT NOT NULL,
+        WEATHER_DATE DATE NOT NULL,
+        TEMPERATURE_2M DECIMAL(5,2) NULL,
+        RAIN DECIMAL(8,2) NULL,
+        SNOWFALL_CM DECIMAL(8,2) NULL,
+        SNOW_DEPTH_M DECIMAL(8,3) NULL,
+        WIND_SPEED_10M DECIMAL(7,2) NULL,
+        WIND_GUSTS_10M DECIMAL(7,2) NULL,
+        LATITUDE DECIMAL(9,6) NOT NULL,
+        LONGITUDE DECIMAL(9,6) NOT NULL,
+
     );
 
 
@@ -83,7 +87,6 @@ BEGIN TRY
         AIRPORT_NAME    VARCHAR(200), --from runways
         CITY            VARCHAR(100),
         STATE_CODE      VARCHAR(10),
-        STATE_NAME      VARCHAR(100),
         COUNTRY_CODE    VARCHAR(10),
         LATITUDE        DECIMAL(10, 6) NOT NULL,
         LONGITUDE       DECIMAL(10, 6) NOT NULL
@@ -102,24 +105,6 @@ BEGIN TRY
         [MONTH]                INT NOT NULL,
         [QUARTER]              INT,
     );
-
-    
-    /* ============================================================
-       Table: Dim_Aircraft
-       ============================================================ */
-
-    CREATE TABLE Dim_Aircraft
-    (
-         AIRCRAFT_ID            INT PRIMARY KEY IDENTITY(1,1),
-         DOT_ID_Reporting_Airline             INT NOT NULL,
-         UNIQUE_CARRIER         VARCHAR(10) NOT NULL,
-         PAYLOAD                DECIMAL(18, 2),
-         SEATS                  DECIMAL(12, 2),
-       
-         CONSTRAINT FK_AIRLINE_ID FOREIGN KEY(DOT_ID_Reporting_Airline) REFERENCES Dim_Airline(DOT_ID_Reporting_Airline),
-         CONSTRAINT UQ_Dim_Aircraft UNIQUE (DOT_ID_Reporting_Airline, UNIQUE_CARRIER, PAYLOAD, SEATS)
-    );
-
 
 
     /* ============================================================
@@ -184,29 +169,30 @@ BEGIN TRY
 
     CREATE TABLE Fact_Passengers
     (
-        SEGMENT_PASSENGERS_ID  INT PRIMARY KEY,
-        DATE_ID                INT NOT NULL,
-        ORIGIN_AIRPORT_ID      INT NOT NULL,
-        DEST_AIRPORT_ID        INT,
-        AIRCRAFT_ID            INT NOT NULL,
-        PASSENGERS             INT NOT NULL,
-        FREIGHT                DECIMAL(18, 2),
-        MAIL                   DECIMAL(18, 2),
-        DEPARTURES_SCHEDULED   DECIMAL(12, 2),
-        DEPARTURES_PERFORMED   DECIMAL(12, 2) NOT NULL,
-        DISTANCE               DECIMAL(12, 2),
-        AIR_TIME               DECIMAL(12, 2),
-        DISTANCE_GROUP         INT
+        SEGMENT_PASSENGERS_ID   INT PRIMARY KEY,
+        DATE_ID                 INT NOT NULL,
+        DOT_ID_REPORTING_AIRLINE INT NOT NULL,
+        ORIGIN_AIRPORT_ID       INT NOT NULL,
+        DEST_AIRPORT_ID         INT,
+        PAYLOAD                 DECIMAL(18, 2),
+        SEATS                   DECIMAL(12, 2),
+        PASSENGERS              INT NOT NULL,
+        FREIGHT                 DECIMAL(18, 2),
+        MAIL                    DECIMAL(18, 2),
+        DEPARTURES_SCHEDULED    DECIMAL(12, 2),
+        DEPARTURES_PERFORMED    DECIMAL(12, 2) NOT NULL,
+        DISTANCE                DECIMAL(12, 2),
+        AIR_TIME                DECIMAL(12, 2),
+        DISTANCE_GROUP          INT
 
 
         CONSTRAINT FK_DATE_PASSENGERS_ID FOREIGN KEY(DATE_ID) REFERENCES Dim_Date_Passengers(DATE_ID),
 
         CONSTRAINT FK_ORIGIN_PASSENGERS_AIRPORT_ID FOREIGN KEY(ORIGIN_AIRPORT_ID) REFERENCES Dim_Airport(AIRPORT_ID),
 
-        CONSTRAINT FK_DEST_PASSENGERS_AIRPORT_ID FOREIGN KEY(DEST_AIRPORT_ID) REFERENCES Dim_Airport(AIRPORT_ID), 
+        CONSTRAINT FK_DEST_PASSENGERS_AIRPORT_ID FOREIGN KEY(DEST_AIRPORT_ID) REFERENCES Dim_Airport(AIRPORT_ID),
 
-        CONSTRAINT FK_AIRCRAFT_ID FOREIGN KEY(AIRCRAFT_ID) REFERENCES Dim_Aircraft(AIRCRAFT_ID)
-
+        CONSTRAINT FK_AIRLINE_ID FOREIGN KEY(DOT_ID_REPORTING_AIRLINE) REFERENCES Dim_Airline(DOT_ID_REPORTING_AIRLINE)
 
     );
 

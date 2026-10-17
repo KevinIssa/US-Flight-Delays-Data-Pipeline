@@ -1,3 +1,4 @@
+
 USE DWH_DomesticFlights;
 GO
 
@@ -5,25 +6,40 @@ BEGIN TRY
     BEGIN TRANSACTION;
 
     INSERT INTO dbo.Dim_Weather
-    (
-       CALL_API_ID,
-       TEMPERATURE,
-       SNOWFALL,
-       RAIN,
-       SNOW_DEPTH,
-       WIND_SPEED_10M,
-       WIND_GUSTS_10M,
+    (   
+        CALL_API_ID,
+        HOUR_ID,
+        WEATHER_DATE,
+        TEMPERATURE_2M,
+        RAIN,
+        SNOWFALL_CM,
+        SNOW_DEPTH_M,
+        WIND_SPEED_10M,
+        WIND_GUSTS_10M,
+        LATITUDE,
+        LONGITUDE
     )
+    SELECT
+         CALL_API_ID,
+         HOUR_ID,
+         WEATHER_DATE,
+         TEMPERATURE_2M,
+         RAIN,
+         SNOWFALL_CM,
+         SNOW_DEPTH_M,
+         WIND_SPEED_10M,
+         WIND_GUSTS_10M,
+         LATITUDE,
+         LONGITUDE
 
-    SELECT Top(1000)
+    FROM StagingSilver.dbo.Weather AS W
+    
+    WHERE NOT EXISTS (
+        SELECT 1
+        FROM dbo.Dim_Weather AS DW
+        WHERE DW.CALL_API_ID = W.CALL_API_ID
+    );
 
-        
-
-    FROM 
-
-    WHERE NOT EXISTS(
-    SELECT 1 FROM DWH_DomesticFlights.dbo.Dim_Weather AS DW
-    WHERE FI.InvoiceLineId = IL.InvoiceLineId)
 
     COMMIT TRANSACTION;
     PRINT 'Chargement Dim_Weather termine avec succes.';

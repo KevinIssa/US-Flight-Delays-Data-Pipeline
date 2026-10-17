@@ -13,7 +13,7 @@ BEGIN TRY
         DAY_OF_MONTH,
         DAY_OF_WEEK
     )
-    SELECT DISTINCT TOP (1000)
+    SELECT DISTINCT
         F.FLIGHT_DATE,
         F.[YEAR],
         F.[MONTH],
@@ -28,7 +28,7 @@ BEGIN TRY
         SELECT 1
         FROM dbo.Dim_Date_Flights AS DF
         WHERE DF.FLIGHT_DATE = F.FLIGHT_DATE
-    );
+    )
 
     COMMIT TRANSACTION;
     PRINT 'Chargement Dim_Date_Flights termine avec succes.';

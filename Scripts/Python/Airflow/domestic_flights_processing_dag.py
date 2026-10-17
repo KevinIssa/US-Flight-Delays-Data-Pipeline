@@ -21,10 +21,7 @@ sys.path.insert(0, str(AIRFLOW_PATH))
 
 def data_scraping_processing_dag():
 
-    web_scraping_task = web_scraping()
-    extract_zip_files_task = extract_zip_files()
-
-    web_scraping_task >> extract_zip_files_task
+    web_scraping() >> extract_zip_files()
 
 @dag(
     dag_id="Domestic-Flights-Bronze-To-Silver-DAG",
@@ -39,8 +36,9 @@ def bronze_to_silver_processing_dag():
 
     flights = prepare_flights_silver()
     passengers = prepare_passengers_silver()
+    weather = prepare_weather_silver()
 
-    flights >> passengers
+    flights >> passengers >> weather
 
 
 
@@ -58,7 +56,8 @@ def insert_data_to_sql_dag():
     flights_to_sql = insert_flights_to_sql()
     passengers_to_sql = insert_passengers_to_sql()
     runways_to_sql = insert_runways_to_sql()
-
+    weather_to_sql = insert_weather_to_sql()
+    
     runways_to_sql >> passengers_to_sql >> flights_to_sql
 
 @dag(
@@ -70,11 +69,9 @@ def insert_data_to_sql_dag():
     tags=["domestic Flights", "etl", "sql-server", "sql"]
 )
 
-def load_dim_tables():
+def load_dwh_dimensions_tables():
 
-    dim_table_load = load_dim_tables()
-
-    dim_table_load
+    load_dim_tables()
 
 @dag(
     dag_id="Domestic-Flights-load-Fact-Tables-DAG",
@@ -85,14 +82,13 @@ def load_dim_tables():
     tags=["domestic Flights", "etl", "sql-server", "sql"]
 )
 
-def load_fact_tables():
+def load_dwh_fact_tables():
 
-    fact_table_load = load_fact_tables()
+    load_fact_tables()
 
-    fact_table_load
 
 bronze_to_silver_processing_dag()
 data_scraping_processing_dag()
 insert_data_to_sql_dag()
-#load_dim_tables()
-#load_fact_tables()
+load_dwh_dimensions_tables()
+load_dwh_fact_tables()

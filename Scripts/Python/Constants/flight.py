@@ -14,7 +14,6 @@ COLUMNS_TO_KEEP_FLIGHTS = [
     "Origin",
     "OriginCityName",
     "OriginState",
-    "OriginStateName",
     "DestAirportID",
     "Dest",
     "DestCityName",
@@ -66,7 +65,6 @@ FLIGHT_SCHEMA = StructType([
     StructField("Origin", StringType(), True),
     StructField("OriginCityName", StringType(), True),
     StructField("OriginState", StringType(), True),
-    StructField("OriginStateName", StringType(), True),
 
     StructField("DestAirportID", IntegerType(), True),
     StructField("Dest", StringType(), True),
@@ -126,7 +124,6 @@ FLIGHT_COLUMN_MAPPING = {
     "Origin": "ORIGIN",
     "OriginCityName": "ORIGIN_CITY_NAME",
     "OriginState": "ORIGIN_STATE",
-    "OriginStateName": "ORIGIN_STATE_NAME",
 
     "DestAirportID": "DEST_AIRPORT_ID",
     "Dest": "DEST",

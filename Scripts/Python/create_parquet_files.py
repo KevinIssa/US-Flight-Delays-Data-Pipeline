@@ -26,3 +26,11 @@ def create_runways_parquet(df_runways, runways_silver_path):
         .mode("overwrite")
         .parquet(runways_silver_path.as_posix())
     )
+
+def create_weather_parquet(df_weather, weather_silver_path):
+
+    (df_weather.coalesce(1)
+        .write
+        .mode("overwrite")
+        .parquet(weather_silver_path.as_posix())
+    )

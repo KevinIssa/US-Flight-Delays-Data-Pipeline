@@ -104,6 +104,22 @@ def prepare_passengers_silver():
     finally:
         spark.stop()
 
+@task(retries=0)
+def prepare_weather_silver():
+
+    spark = get_spark()
+    try:
+        weather_files = get_weather_files(WEATHER_BRONZE_PATH)
+        df_weather = read_weather_csv(spark, weather_files)
+
+        df_weather = add_row_hash(df_weather)
+
+        create_weather_parquet(df_weather, WEATHER_SILVER_PATH)
+
+    finally:
+        spark.stop()
+
+
 # --------------------------------------------------
 # DAG 2 : Insertion SQL Server
 # --------------------------------------------------
@@ -152,18 +168,32 @@ def insert_runways_to_sql():
     finally:
         spark.stop()
 
+@task(retries=0)
+def insert_weather_to_sql():
+
+    sql_staging_url, sql_dwh_url, sql_user, sql_password, sql_fourth_table = get_sql_env(sql_table_env_name ="SQL_SERVER_FOURTH_TABLE")
+
+    spark = get_spark()
+    try:
+        df_weather = read_weather_parquet(spark, WEATHER_SILVER_PATH)
+        insert_into_sql_table(df_weather, spark, sql_staging_url, sql_fourth_table, sql_user, sql_password)
+
+    finally:
+        spark.stop()
+        
 
 @task(retries=0)
 def load_dim_tables():
 
     spark = get_spark()
-    sql_files = [ "Dim_Time.sql","Dim_Airline.sql", "Dim_Airport.sql", "Dim_Aircraft.sql", "Dim_Date_Flights.sql", "Dim_Date_Passengers.sql"]
+    sql_files = [ "Dim_Time.sql", "Dim_Date_Flights.sql", "Dim_Date_Passengers.sql","Dim_Airline.sql", "Dim_Airport.sql", "Dim_Weather.sql"]
 
     try:
-        sql_staging_url, sql_dwh_url, sql_user, sql_password = get_sql_env(sql_table_env_name = "SQL_DWH_URL")
+        sql_staging_url, sql_dwh_url, sql_user, sql_password, sql_table = get_sql_env(sql_table_env_name = "SQL_DWH_URL")
 
         for sql_file in sql_files:
-            execute_sql_file(spark, f"{SQL_ETL_FOLDER}/{sql_file}", sql_dwh_url, sql_user, sql_password)
+            file_path = f"{SQL_ETL_FOLDER}/{sql_file}"
+            execute_sql_file(spark, file_path, sql_dwh_url, sql_user, sql_password)
 
     finally:
         spark.stop()
@@ -173,13 +203,15 @@ def load_dim_tables():
 def load_fact_tables():
 
     spark = get_spark()
-    sql_files = ["Fact_Flights.sql", "Fact_Passengers.sql"]
+    sql_files = ["Fact_Passengers.sql", "Fact_Flights.sql"]
 
     try:
-        sql_staging_url, sql_dwh_url, jdbc_user, jdbc_password = get_sql_env(sql_table_env_name = "SQL_DWH_URL")
+        sql_staging_url, sql_dwh_url, jdbc_user, jdbc_password, sql_table = get_sql_env(sql_table_env_name = "SQL_DWH_URL")
 
         for sql_file in sql_files:
-                    execute_sql_file(spark, f"{SQL_ETL_FOLDER}/{sql_file}", sql_dwh_url, jdbc_user, jdbc_password)
+
+                file_path = f"{SQL_ETL_FOLDER}/{sql_file}"
+                execute_sql_file(spark, file_path, sql_dwh_url, jdbc_user, jdbc_password)
 
     finally:
         spark.stop()
