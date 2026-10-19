@@ -22,7 +22,7 @@ ENV_PATH = Path(__file__).resolve().parents[2] / ".env"
 
 def get_spark():
     """Cree ou recupere une SparkSession dans le processus de la task."""
-    os.environ["PYSPARK_SUBMIT_ARGS"] = "--driver-memory 14g pyspark-shell"
+    os.environ["PYSPARK_SUBMIT_ARGS"] = "--driver-memory 18g pyspark-shell"
 
     spark = (
         SparkSession.builder
@@ -30,7 +30,7 @@ def get_spark():
         .appName("DomesticFlightDelays")
         .config("spark.sql.adaptive.enabled", "true")
         .config("spark.sql.shuffle.partitions", "64")
-        #.config("spark.local.dir", "SparkTemp") #choisir où spark doit stocker ses fichiers temporaires sur le disque
+        .config("spark.local.dir", "SparkTemp") #choisir où spark doit stocker ses fichiers temporaires sur le disque
         .config("spark.driver.extraClassPath", str(JDBC_DRIVER_PATH))
         .getOrCreate()
     )
@@ -181,7 +181,6 @@ def insert_runways_to_sql():
 
     finally:
         spark.stop()
-
 
 @task(retries=0)
 def insert_weather_to_sql():
