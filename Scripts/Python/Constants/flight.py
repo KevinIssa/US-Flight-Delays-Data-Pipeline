@@ -18,7 +18,6 @@ COLUMNS_TO_KEEP_FLIGHTS = [
     "Dest",
     "DestCityName",
     "DestState",
-    "DestStateName",
     "CRSDepTime",
     "DepTime",
     "DepDelay",
@@ -70,7 +69,6 @@ FLIGHT_SCHEMA = StructType([
     StructField("Dest", StringType(), True),
     StructField("DestCityName", StringType(), True),
     StructField("DestState", StringType(), True),
-    StructField("DestStateName", StringType(), True),
 
     StructField("CRSDepTime", IntegerType(), True),
     StructField("DepTime", IntegerType(), True),
@@ -129,7 +127,6 @@ FLIGHT_COLUMN_MAPPING = {
     "Dest": "DEST",
     "DestCityName": "DEST_CITY_NAME",
     "DestState": "DEST_STATE",
-    "DestStateName": "DEST_STATE_NAME",
 
     "CRSDepTime": "CRS_DEP_TIME",
     "DepTime": "DEP_TIME",
