@@ -58,7 +58,7 @@ def insert_data_to_sql_dag():
     runways_to_sql = insert_runways_to_sql()
     weather_to_sql = insert_weather_to_sql()
     
-    runways_to_sql >> passengers_to_sql >> flights_to_sql
+    runways_to_sql >> passengers_to_sql >> weather_to_sql >> flights_to_sql
 
 @dag(
     dag_id="Domestic-Flights-load-Dim-Tables-DAG",

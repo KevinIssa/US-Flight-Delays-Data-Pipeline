@@ -147,22 +147,22 @@ BEGIN TRY
     -- 1. Table Flights
     CREATE UNIQUE INDEX UX_Flights_Hash
     ON dbo.Flights (ROW_HASH)
-    WITH (IGNORE_DUP_KEY = OFF);
+    WITH (IGNORE_DUP_KEY = ON);
        
      -- 2. Table SegmentPassengers
     CREATE UNIQUE INDEX UX_SegmentPassengers_Hash
     ON dbo.SegmentPassengers (ROW_HASH)
-    WITH (IGNORE_DUP_KEY = OFF);
+    WITH (IGNORE_DUP_KEY = ON);
 
     -- 3. Table Runways
     CREATE UNIQUE INDEX UX_Runways_Hash
     ON dbo.Runways (ROW_HASH)
-    WITH (IGNORE_DUP_KEY = OFF);
+    WITH (IGNORE_DUP_KEY = ON);
 
     -- 4. Table Weather
     CREATE UNIQUE INDEX UX_Weather_Hash
     ON dbo.Weather (ROW_HASH)
-    WITH (IGNORE_DUP_KEY = OFF);
+    WITH (IGNORE_DUP_KEY = ON);
 
 
     COMMIT TRANSACTION;
