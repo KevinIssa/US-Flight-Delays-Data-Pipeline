@@ -16,6 +16,12 @@ def read_runways_parquet(spark, runways_silver_path):
 
     return df_runways_silver
 
+def read_weather_parquet(spark, weather_silver_path):
+
+    df_weather_silver = spark.read.parquet(weather_silver_path.as_posix())
+
+    return df_weather_silver
+
 def arrange_parquet_columns_flights_silver(df_flights_silver, first_columns):
 
     other_columns_flights = [

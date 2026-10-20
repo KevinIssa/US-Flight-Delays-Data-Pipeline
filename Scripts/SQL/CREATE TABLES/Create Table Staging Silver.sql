@@ -11,6 +11,7 @@ BEGIN TRY
     DROP TABLE IF EXISTS Flights
     DROP TABLE IF EXISTS SegmentPassengers
     DROP TABLE IF EXISTS Runways
+    DROP TABLE IF EXISTS Weather
 
     /* ============================================================
        Table: Flights
@@ -31,12 +32,10 @@ BEGIN TRY
         [ORIGIN]                   VARCHAR(10) NOT NULL,
         [ORIGIN_CITY_NAME]         VARCHAR(100),
         [ORIGIN_STATE]              VARCHAR(10),
-        [ORIGIN_STATE_NAME]        VARCHAR(100),
         [DEST_AIRPORT_ID]          INT,
         [DEST]                     VARCHAR(10),
         [DEST_CITY_NAME]           VARCHAR(100),
         [DEST_STATE]               VARCHAR(10),
-        [DEST_STATE_NAME]          VARCHAR(100),
         [CRS_DEP_TIME]             INT,
         [DEP_TIME]                 INT,
         [DEP_DELAY]                DECIMAL(10, 2),
@@ -126,20 +125,42 @@ BEGIN TRY
     );
     
 
+    CREATE TABLE Weather
+    (
+        CALL_API_ID     INT PRIMARY KEY IDENTITY(1,1),
+        HOUR_ID         TINYINT NOT NULL,
+        WEATHER_DATE    DATE NOT NULL,
+        TEMPERATURE_2M  DECIMAL(5,2) NULL,
+        RAIN            DECIMAL(8,2) NULL,
+        SNOWFALL_CM     DECIMAL(8,2) NULL,
+        SNOW_DEPTH_M    DECIMAL(8,3) NULL,
+        WIND_SPEED_10M  DECIMAL(7,2) NULL,
+        WIND_GUSTS_10M  DECIMAL(7,2) NULL,
+        LATITUDE        DECIMAL(9,6) NOT NULL,
+        LONGITUDE       DECIMAL(9,6) NOT NULL,
+        ROW_HASH        VARCHAR(65) NOT NULL
+    )
+
+
     -- 1. Table Flights
     CREATE UNIQUE INDEX UX_Flights_Hash
     ON dbo.Flights (ROW_HASH)
-    WITH (IGNORE_DUP_KEY = OFF);
+    WITH (IGNORE_DUP_KEY = ON);
        
      -- 2. Table SegmentPassengers
     CREATE UNIQUE INDEX UX_SegmentPassengers_Hash
     ON dbo.SegmentPassengers (ROW_HASH)
-    WITH (IGNORE_DUP_KEY = OFF);
+    WITH (IGNORE_DUP_KEY = ON);
 
     -- 3. Table Runways
     CREATE UNIQUE INDEX UX_Runways_Hash
     ON dbo.Runways (ROW_HASH)
-    WITH (IGNORE_DUP_KEY = OFF); 
+    WITH (IGNORE_DUP_KEY = ON);
+
+    -- 4. Table Weather
+    CREATE UNIQUE INDEX UX_Weather_Hash
+    ON dbo.Weather (ROW_HASH)
+    WITH (IGNORE_DUP_KEY = ON);
 
 
     COMMIT TRANSACTION;

@@ -22,7 +22,7 @@ ENV_PATH = Path(__file__).resolve().parents[2] / ".env"
 
 def get_spark():
     """Cree ou recupere une SparkSession dans le processus de la task."""
-    os.environ["PYSPARK_SUBMIT_ARGS"] = "--driver-memory 14g pyspark-shell"
+    os.environ["PYSPARK_SUBMIT_ARGS"] = "--driver-memory 18g pyspark-shell"
 
     spark = (
         SparkSession.builder
@@ -30,6 +30,7 @@ def get_spark():
         .appName("DomesticFlightDelays")
         .config("spark.sql.adaptive.enabled", "true")
         .config("spark.sql.shuffle.partitions", "64")
+        .config("spark.local.dir", "SparkTemp") #choisir où spark doit stocker ses fichiers temporaires sur le disque
         .config("spark.driver.extraClassPath", str(JDBC_DRIVER_PATH))
         .getOrCreate()
     )
@@ -103,6 +104,22 @@ def prepare_passengers_silver():
     finally:
         spark.stop()
 
+@task(retries=0)
+def prepare_weather_silver():
+
+    spark = get_spark()
+    try:
+        weather_files = get_weather_files(WEATHER_BRONZE_PATH)
+        df_weather = read_weather_csv(spark, weather_files)
+
+        df_weather = add_row_hash(df_weather)
+
+        create_weather_parquet(df_weather, WEATHER_SILVER_PATH)
+
+    finally:
+        spark.stop()
+
+
 # --------------------------------------------------
 # DAG 2 : Insertion SQL Server
 # --------------------------------------------------
@@ -110,14 +127,18 @@ def prepare_passengers_silver():
 @task(retries=0)
 def insert_flights_to_sql():
 
-    sql_server_url, sql_user, sql_password, sql_table = get_sql_env(sql_table_env_name = "SQL_SERVER_TABLE")
-
+    sql_staging_url, sql_dwh_url, sql_user, sql_password, sql_table = get_sql_env(sql_table_env_name="SQL_SERVER_TABLE")
 
     spark = get_spark()
     try:
+        before = get_sql_row_count(spark, sql_staging_url, sql_table, sql_user, sql_password)
+
         df_flights_silver = read_flights_parquet(spark, FLIGHT_SILVER_PATH)
         df_flights_silver = arrange_parquet_columns_flights_silver(df_flights_silver, FIRST_COLUMNS)
-        insert_into_sql_table(df_flights_silver, spark, sql_server_url, sql_table, sql_user, sql_password)
+        insert_into_sql_table(df_flights_silver, spark, sql_staging_url, sql_table, sql_user, sql_password)
+
+        after = get_sql_row_count(spark, sql_staging_url, sql_table, sql_user, sql_password)
+        log_inserted_rows(sql_table, before, after)
 
     finally:
         spark.stop()
@@ -126,13 +147,18 @@ def insert_flights_to_sql():
 @task(retries=0)
 def insert_passengers_to_sql():
 
-    sql_server_url, sql_user, sql_password, sql_second_table = get_sql_env(sql_table_env_name = "SQL_SERVER_SECOND_TABLE")
+    sql_staging_url, sql_dwh_url, sql_user, sql_password, sql_second_table = get_sql_env(sql_table_env_name="SQL_SERVER_SECOND_TABLE")
 
     spark = get_spark()
     try:
+        before = get_sql_row_count(spark, sql_staging_url, sql_second_table, sql_user, sql_password)
+
         df_passengers_silver = read_passengers_parquet(spark, PASSENGER_SILVER_PATH)
         df_passengers_silver = arrange_parquet_columns_passengers_silver(df_passengers_silver, FIRST_COLUMNS)
-        insert_into_sql_table(df_passengers_silver, spark, sql_server_url, sql_second_table, sql_user, sql_password)
+        insert_into_sql_table(df_passengers_silver, spark, sql_staging_url, sql_second_table, sql_user, sql_password)
+
+        after = get_sql_row_count(spark, sql_staging_url, sql_second_table, sql_user, sql_password)
+        log_inserted_rows(sql_second_table, before, after)
 
     finally:
         spark.stop()
@@ -141,13 +167,94 @@ def insert_passengers_to_sql():
 @task(retries=0)
 def insert_runways_to_sql():
 
-    sql_server_url, sql_user, sql_password, sql_third_table = get_sql_env(sql_table_env_name ="SQL_SERVER_THIRD_TABLE")
+    sql_staging_url, sql_dwh_url, sql_user, sql_password, sql_third_table = get_sql_env(sql_table_env_name="SQL_SERVER_THIRD_TABLE")
 
     spark = get_spark()
     try:
-        df_runways = read_runways_parquet(spark, RUNWAYS_SILVER_PATH)
-        insert_into_sql_table(df_runways, spark, sql_server_url, sql_third_table, sql_user, sql_password)
+        before = get_sql_row_count(spark, sql_staging_url, sql_third_table, sql_user, sql_password)
+
+        df_runways_silver = read_runways_parquet(spark, RUNWAYS_SILVER_PATH)
+        insert_into_sql_table(df_runways_silver, spark, sql_staging_url, sql_third_table, sql_user, sql_password)
+
+        after = get_sql_row_count(spark, sql_staging_url, sql_third_table, sql_user, sql_password)
+        log_inserted_rows(sql_third_table, before, after)
 
     finally:
         spark.stop()
 
+@task(retries=0)
+def insert_weather_to_sql():
+
+    sql_staging_url, sql_dwh_url, sql_user, sql_password, sql_fourth_table = get_sql_env(sql_table_env_name="SQL_SERVER_FOURTH_TABLE")
+
+    spark = get_spark()
+    try:
+        before = get_sql_row_count(spark, sql_staging_url, sql_fourth_table, sql_user, sql_password)
+
+        df_weather = read_weather_parquet(spark, WEATHER_SILVER_PATH)
+        insert_into_sql_table(df_weather, spark, sql_staging_url, sql_fourth_table, sql_user, sql_password)
+
+        after = get_sql_row_count(spark, sql_staging_url, sql_fourth_table, sql_user, sql_password)
+        log_inserted_rows(sql_fourth_table, before, after)
+
+    finally:
+        spark.stop()
+
+  
+
+@task(retries=0)
+def load_dim_tables():
+
+    spark = get_spark()
+    sql_files = {
+        "Dim_Time.sql": "dbo.Dim_Time",
+        "Dim_Date_Flights.sql": "dbo.Dim_Date_Flights",
+        "Dim_Date_Passengers.sql": "dbo.Dim_Date_Passengers",
+        "Dim_Airline.sql": "dbo.Dim_Airline",
+        "Dim_Airport.sql": "dbo.Dim_Airport",
+        "Dim_Weather.sql": "dbo.Dim_Weather"
+    }
+
+    try:
+        sql_staging_url, sql_dwh_url, sql_user, sql_password, sql_table = get_sql_env(sql_table_env_name = "SQL_DWH_URL")
+
+        for sql_file, table in sql_files.items():
+
+            before = get_sql_row_count(spark, sql_dwh_url, table, sql_user, sql_password)
+
+            file_path = f"{SQL_ETL_FOLDER}/{sql_file}"
+
+            execute_sql_file(spark, file_path, sql_dwh_url, sql_user, sql_password)
+
+            after = get_sql_row_count(spark, sql_dwh_url, table, sql_user, sql_password)
+
+            log_inserted_rows(table, before, after)
+
+    finally:
+        spark.stop()
+
+
+@task(retries=0)
+def load_fact_tables():
+
+    spark = get_spark()
+    sql_files = {"Fact_Passengers.sql" : "dbo.Fact_Passengers", "Fact_Flights.sql" : "dbo.Fact_Flights"}
+
+    try:
+        sql_staging_url, sql_dwh_url, sql_user, sql_password, sql_table = get_sql_env(sql_table_env_name = "SQL_DWH_URL")
+
+        for sql_file, table in sql_files.items():
+        
+            before = get_sql_row_count(spark, sql_dwh_url, table, sql_user, sql_password)
+
+            file_path = f"{SQL_ETL_FOLDER}/{sql_file}"
+
+            execute_sql_file(spark, file_path, sql_dwh_url, sql_user, sql_password)
+
+            after = get_sql_row_count(spark, sql_dwh_url, table, sql_user, sql_password)
+
+            log_inserted_rows(table, before, after)
+
+
+    finally:
+        spark.stop()

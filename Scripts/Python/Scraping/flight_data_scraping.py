@@ -10,7 +10,7 @@ def download_transtats_zip_files():
     BASE_URL = "https://transtats.bts.gov/PREZIP/"
 
     # Dossier où tous les ZIP seront téléchargés
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    FLIGHT_BRONZE_PATH.mkdir(parents=True, exist_ok=True)
 
 
     # --------------------------------------------------
@@ -67,7 +67,7 @@ def download_transtats_zip_files():
         # Nom du fichier uniquement
         filename = href.split("/")[-1]
 
-        destination = OUTPUT_DIR / filename
+        destination = FLIGHT_BRONZE_PATH / filename
 
         print(f"[{index}/{len(files)}] "
             f"{year}-{month:02d} -> {filename}")
