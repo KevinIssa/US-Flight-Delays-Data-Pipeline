@@ -24,9 +24,10 @@ def extract_flight_zip_files():
 
                 year = match.group(1)
                 month = match.group(2).zfill(2)
-                destination = FLIGHT_BRONZE_PATH / new_name
-                # Nouveau nom : YYYY_MM.csv
+                 # Nouveau nom : YYYY_MM.csv
                 new_name = f"{year}_{month}.csv"
+                
+                destination = FLIGHT_BRONZE_PATH / new_name
 
                 # Extraire directement avec le nouveau nom
                 data = zip_file.read(file_name)
