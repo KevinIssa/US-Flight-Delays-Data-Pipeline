@@ -67,7 +67,7 @@ def download_transtats_zip_files():
         # Nom du fichier uniquement
         filename = href.split("/")[-1]
 
-        destination = OUTPUT_DIR / filename
+        destination = FLIGHT_BRONZE_PATH / filename
 
         print(f"[{index}/{len(files)}] "
             f"{year}-{month:02d} -> {filename}")
