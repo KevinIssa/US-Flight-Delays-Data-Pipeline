@@ -69,12 +69,12 @@ def prepare_flights_silver():
     spark = get_spark()
     try:
         #get the csv files
-        flight_files = get_flight_files(FLIGHT_BRONZE_PATH)
-        runways_files = get_runways_files(RUNWAYS_BRONZE_PATH)
+        flight_files = get_files(FLIGHT_BRONZE_PATH)
+        runways_files = get_files(RUNWAYS_BRONZE_PATH)
 
         #read the csv files and assign it to a dataframe
-        df_bronze_flights = read_flight_csv(spark, flight_files)
-        df_bronze_runways = read_runways_csv(spark, runways_files)
+        df_bronze_flights = read_csv(spark, flight_files, columns_to_keep = COLUMNS_TO_KEEP_FLIGHTS)
+        df_bronze_runways = read_csv(spark, runways_files, columns_to_keep = COLUMNS_TO_KEEP_AIRPORTS, infer_schema=True)
 
         #filter and clean the dataframes
         df_silver_flights = df_flights_transformations(df_bronze_flights)
@@ -85,8 +85,9 @@ def prepare_flights_silver():
         df_silver_flights = add_row_hash(df_silver_flights)
         df_silver_runways = add_row_hash(df_silver_runways)
 
-        create_flights_parquet(df_silver_flights, FLIGHT_SILVER_PATH)
-        create_runways_parquet(df_silver_runways, RUNWAYS_SILVER_PATH)
+
+        create_partitioned_parquet(df_silver_flights, FLIGHT_SILVER_PATH)
+        create_single_partition_parquet(df_silver_runways, RUNWAYS_SILVER_PATH)
 
     finally:
         spark.stop()
@@ -96,14 +97,14 @@ def prepare_passengers_silver():
     #same structure as the function above
     spark = get_spark()
     try:
-        passenger_files = get_passenger_files(PASSENGER_BRONZE_PATH)
-        df_passengers = read_passengers_csv(spark, passenger_files)
+        passenger_files = get_files(PASSENGER_BRONZE_PATH)
+        df_passengers = read_csv(spark, passenger_files, columns_to_keep = COLUMNS_TO_KEEP_PASSENGERS)
 
         df_passengers = df_passengers_transformations(df_passengers)
         df_passengers = add_row_hash(df_passengers)
 
         
-        create_passengers_parquet(df_passengers, PASSENGER_SILVER_PATH)
+        create_partitioned_parquet(df_passengers, PASSENGER_SILVER_PATH)
 
     finally:
         spark.stop()
@@ -113,12 +114,12 @@ def prepare_weather_silver():
 
     spark = get_spark()
     try:
-        weather_files = get_weather_files(WEATHER_BRONZE_PATH)
-        df_weather = read_weather_csv(spark, weather_files)
+        weather_files = get_files(WEATHER_BRONZE_PATH)
+        df_weather = read_csv(spark, weather_files, infer_schema=True)
 
         df_weather = add_row_hash(df_weather)
 
-        create_weather_parquet(df_weather, WEATHER_SILVER_PATH)
+        create_single_partition_parquet(df_weather, WEATHER_SILVER_PATH)
 
     finally:
         spark.stop()
@@ -138,9 +139,9 @@ def insert_flights_to_sql():
         #number of lines in the table before the insertion
         before = get_sql_row_count(spark, sql_staging_url, sql_table, sql_user, sql_password)
 
-        df_flights_silver = read_flights_parquet(spark, FLIGHT_SILVER_PATH)
+        df_flights_silver = read_parquet(spark, FLIGHT_SILVER_PATH)
         #arrange the places of the columns to make the insert easier to build
-        df_flights_silver = arrange_parquet_columns_flights_silver(df_flights_silver, FIRST_COLUMNS)
+        df_flights_silver = move_columns_to_front(df_flights_silver, FIRST_COLUMNS)
         insert_into_sql_table(df_flights_silver, spark, sql_staging_url, sql_table, sql_user, sql_password)
 
         after = get_sql_row_count(spark, sql_staging_url, sql_table, sql_user, sql_password)
@@ -159,8 +160,8 @@ def insert_passengers_to_sql():
     try:
         before = get_sql_row_count(spark, sql_staging_url, sql_second_table, sql_user, sql_password)
 
-        df_passengers_silver = read_passengers_parquet(spark, PASSENGER_SILVER_PATH)
-        df_passengers_silver = arrange_parquet_columns_passengers_silver(df_passengers_silver, FIRST_COLUMNS)
+        df_passengers_silver = read_parquet(spark, PASSENGER_SILVER_PATH)
+        df_passengers_silver = move_columns_to_front(df_passengers_silver, FIRST_COLUMNS)
         insert_into_sql_table(df_passengers_silver, spark, sql_staging_url, sql_second_table, sql_user, sql_password)
 
         after = get_sql_row_count(spark, sql_staging_url, sql_second_table, sql_user, sql_password)
@@ -179,7 +180,7 @@ def insert_runways_to_sql():
     try:
         before = get_sql_row_count(spark, sql_staging_url, sql_third_table, sql_user, sql_password)
 
-        df_runways_silver = read_runways_parquet(spark, RUNWAYS_SILVER_PATH)
+        df_runways_silver = read_parquet(spark, RUNWAYS_SILVER_PATH)
         insert_into_sql_table(df_runways_silver, spark, sql_staging_url, sql_third_table, sql_user, sql_password)
 
         after = get_sql_row_count(spark, sql_staging_url, sql_third_table, sql_user, sql_password)
@@ -197,7 +198,7 @@ def insert_weather_to_sql():
     try:
         before = get_sql_row_count(spark, sql_staging_url, sql_fourth_table, sql_user, sql_password)
 
-        df_weather = read_weather_parquet(spark, WEATHER_SILVER_PATH)
+        df_weather = read_parquet(spark, WEATHER_SILVER_PATH)
         insert_into_sql_table(df_weather, spark, sql_staging_url, sql_fourth_table, sql_user, sql_password)
 
         after = get_sql_row_count(spark, sql_staging_url, sql_fourth_table, sql_user, sql_password)

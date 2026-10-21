@@ -1,14 +1,15 @@
 from pathlib import Path
 
-PROJECT_PATH = Path.cwd()
-
+PROJECT_PATH = Path.cwd() #return the current working directory of the project
 BRONZE_PATH = PROJECT_PATH / "Data" / "Bronze"
+
 FLIGHT_BRONZE_PATH = BRONZE_PATH / "Stats_US_Flights_2019_2026"
 PASSENGER_BRONZE_PATH = BRONZE_PATH / "T_T100D_MARKET_US_CARRIER_ONLY"
 RUNWAYS_BRONZE_PATH = BRONZE_PATH / "Runways"
 WEATHER_BRONZE_PATH = BRONZE_PATH / "Weather"
 
 SILVER_PATH = PROJECT_PATH / "Data" / "Silver"
+
 FLIGHT_SILVER_PATH = SILVER_PATH / "Flights"
 PASSENGER_SILVER_PATH = SILVER_PATH / "Passengers"
 RUNWAYS_SILVER_PATH = SILVER_PATH / "Runways"

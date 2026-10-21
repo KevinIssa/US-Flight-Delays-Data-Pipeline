@@ -1,48 +1,18 @@
-def read_flights_parquet(spark, flight_silver_path):
-
-    df_flights_silver = spark.read.parquet(flight_silver_path.as_posix())
-
-    return df_flights_silver
-
-def read_passengers_parquet(spark, passengers_silver_path):
-
-    df_passengers_silver =  spark.read.parquet(passengers_silver_path.as_posix())
-
-    return df_passengers_silver
-
-def read_runways_parquet(spark, runways_silver_path):
-
-    df_runways_silver = spark.read.parquet(runways_silver_path.as_posix())
-
-    return df_runways_silver
-
-def read_weather_parquet(spark, weather_silver_path):
-
-    df_weather_silver = spark.read.parquet(weather_silver_path.as_posix())
-
-    return df_weather_silver
-
-def arrange_parquet_columns_flights_silver(df_flights_silver, first_columns):
+def read_parquet(spark, file_path):
     """
-    Rearrange the columns to put the variables in first_columns back at the start of the dataframe because they were moved to the back at the creation of
-    the parquet after partitioning. The insert need the columns to be in the same order than those in the table.
+    Read a Parquet dataset into a Spark DataFrame.
     """
-    other_columns_flights = [
-        col for col in df_flights_silver.columns
-        if col not in first_columns
+    return spark.read.parquet(file_path.as_posix())
+
+
+def move_columns_to_front(df, first_columns):
+    """
+    Move the specified columns to the beginning of the DataFrame,
+    preserving the order of all remaining columns that were moved after the parquet partitioning.
+    """
+    other_columns = [
+        column for column in df.columns
+        if column not in first_columns
     ]
 
-    df_flights_silver = df_flights_silver.select(*first_columns, *other_columns_flights)
-
-    return df_flights_silver
-
-def arrange_parquet_columns_passengers_silver(df_passengers_silver, first_columns):
-        
-    other_columns_passengers = [
-        col for col in df_passengers_silver.columns
-        if col not in first_columns
-    ]
-
-    df_passengers_silver = df_passengers_silver.select(*first_columns, *other_columns_passengers)
-
-    return df_passengers_silver
+    return df.select(*first_columns, *other_columns)
