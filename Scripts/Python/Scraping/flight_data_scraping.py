@@ -1,4 +1,3 @@
-from pathlib import Path
 from urllib.request import Request, urlopen, urlretrieve
 from urllib.parse import urljoin
 from Scraping.webscrap_config import *
@@ -6,15 +5,15 @@ import re
 
 
 def download_transtats_zip_files():
-    # Page contenant tous les ZIP TranStats
+    # URL Page with all the zip files
     BASE_URL = "https://transtats.bts.gov/PREZIP/"
 
-    # Dossier où tous les ZIP seront téléchargés
+    # Folder where all the ZIP files will be downloaded
     FLIGHT_BRONZE_PATH.mkdir(parents=True, exist_ok=True)
 
 
     # --------------------------------------------------
-    # 1. Lire la page TranStats
+    # 1. Read the URL page
     # --------------------------------------------------
 
     request = Request(
@@ -27,9 +26,9 @@ def download_transtats_zip_files():
 
 
     # --------------------------------------------------
-    # 2. Récupérer uniquement les fichiers voulus
+    # 2. Get only needed files
     # --------------------------------------------------
-
+    
     pattern = re.compile(
         r'href=["\']([^"\']*'
         r'On_Time_Reporting_Carrier_On_Time_Performance_1987_present_'
@@ -50,21 +49,21 @@ def download_transtats_zip_files():
             files.append((year, month, href))
 
 
-    # Trier correctement par année puis par mois
+    # Sort by year then month
     files.sort(key=lambda x: (x[0], x[1]))
 
-    print(f"{len(files)} fichiers trouvés.\n")
+    print(f"{len(files)} Files found.\n")
 
 
     # --------------------------------------------------
-    # 3. Télécharger les fichiers
+    # 3. Download files
     # --------------------------------------------------
 
     for index, (year, month, href) in enumerate(files, start=1):
 
         url = urljoin(BASE_URL, href)
 
-        # Nom du fichier uniquement
+        # Get only the name of the file
         filename = href.split("/")[-1]
 
         destination = FLIGHT_BRONZE_PATH / filename
@@ -72,7 +71,7 @@ def download_transtats_zip_files():
         print(f"[{index}/{len(files)}] "
             f"{year}-{month:02d} -> {filename}")
 
-        # Ne pas retélécharger un fichier déjà présent
+        # not redownloading a file that's already there
         if destination.exists():
             print("Fichier déjà présent, ignoré.")
             continue
@@ -84,9 +83,9 @@ def download_transtats_zip_files():
         except Exception as e:
             print(f"ERREUR : {e}")
 
-            # En cas de téléchargement incomplet
+            # In case of incomplete download
             if destination.exists():
                 destination.unlink()
 
 
-    print("\nTéléchargement terminé.")
+    print("\nDownload finished.")

@@ -16,7 +16,7 @@ def extract_flight_zip_files():
                 if not file_name.lower().endswith(".csv"):
                     continue
 
-                # Récupérer année et mois
+                # Get year and month
                 match = re.search(r"_(\d{4})_(\d{1,2})\.csv$", file_name, re.IGNORECASE)
 
                 if not match:
@@ -24,12 +24,12 @@ def extract_flight_zip_files():
 
                 year = match.group(1)
                 month = match.group(2).zfill(2)
-                 # Nouveau nom : YYYY_MM.csv
+                 # New name : YYYY_MM.csv
                 new_name = f"{year}_{month}.csv"
                 
                 destination = FLIGHT_BRONZE_PATH / new_name
 
-                # Extraire directement avec le nouveau nom
+                # Extract with the new file name
                 data = zip_file.read(file_name)
 
                 with open(destination, "wb") as csv_file:
@@ -37,4 +37,4 @@ def extract_flight_zip_files():
 
                 print(f"  → {new_name}")
 
-    print("Extraction terminée.")
+    print("Extraction finished.")

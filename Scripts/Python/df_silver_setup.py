@@ -23,7 +23,10 @@ def read_weather_parquet(spark, weather_silver_path):
     return df_weather_silver
 
 def arrange_parquet_columns_flights_silver(df_flights_silver, first_columns):
-
+    """
+    Rearrange the columns to put the variables in first_columns back at the start of the dataframe because they were moved to the back at the creation of
+    the parquet after partitioning. The insert need the columns to be in the same order than those in the table.
+    """
     other_columns_flights = [
         col for col in df_flights_silver.columns
         if col not in first_columns

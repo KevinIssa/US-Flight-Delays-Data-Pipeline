@@ -15,30 +15,30 @@ from df_transformations import *
 from df_silver_setup import *
 from create_parquet_files import *
 from insert_into_sql_server import *
-# Constantes partagees entre les tasks.
+# Constants shared between tasks.
 
-FIRST_COLUMNS = ["YEAR", "MONTH", "QUARTER"]
+FIRST_COLUMNS = ["YEAR", "MONTH", "QUARTER"] #columns that i want to be in first positions for the arrange_column function
 ENV_PATH = Path(__file__).resolve().parents[2] / ".env"
 
 def get_spark():
-    """Cree ou recupere une SparkSession dans le processus de la task."""
-    os.environ["PYSPARK_SUBMIT_ARGS"] = "--driver-memory 18g pyspark-shell"
+    #Create or get a SparkSession
+    os.environ["PYSPARK_SUBMIT_ARGS"] = "--driver-memory 18g pyspark-shell" #allow a number of memory to spark
 
     spark = (
         SparkSession.builder
-        .master("local[*]")
+        .master("local[*]") #use all computer cores
         .appName("DomesticFlightDelays")
         .config("spark.sql.adaptive.enabled", "true")
         .config("spark.sql.shuffle.partitions", "64")
-        .config("spark.local.dir", "SparkTemp") #choisir où spark doit stocker ses fichiers temporaires sur le disque
-        .config("spark.driver.extraClassPath", str(JDBC_DRIVER_PATH))
+        .config("spark.local.dir", "SparkTemp") #choose where spark need to store his temp files on the disk
+        .config("spark.driver.extraClassPath", str(JDBC_DRIVER_PATH))#usage of JDBC driver to connect to sql
         .getOrCreate()
     )
     return spark
 
 
 # --------------------------------------------------
-# DAG 1 : Scraping et extraction ZIP
+# Scraping et extraction ZIP
 # --------------------------------------------------
 
 @task(retries=0)
@@ -54,12 +54,13 @@ def extract_zip_files():
 
 
 # --------------------------------------------------
-# DAG 2 : Preparation Silver
+# Preparation Silver
 # --------------------------------------------------
 """
-obliger de créer un environnement spark et de le fermer à la fin de chaque task pour eviter des bugs de airflow qui feraient en sorte que la variable ne seraient pas partagés entre les differentes tasks.
-Cela pourrait causer des problèmes de mémoire ou de conflits entre les sessions Spark. En fermant et recreant la session à chaque tasks,
-on s'assure que chaque task commence avec un environnement propre et isolé, ce qui améliore la stabilité et la fiabilité du pipeline de données.
+Having to create a Spark environment and close it at the end of each task to avoid Airflow bugs
+that would prevent variables from being shared between different tasks. This could cause memory issues or conflicts between Spark sessions. 
+By closing and recreating the session for each task, we make sure that each task starts with a clean, isolated environment,
+which improves the stability and reliability of the data pipeline.
 """
 
 @task(retries=0)
@@ -67,15 +68,18 @@ def prepare_flights_silver():
 
     spark = get_spark()
     try:
+        #get the csv files
         flight_files = get_flight_files(FLIGHT_BRONZE_PATH)
         runways_files = get_runways_files(RUNWAYS_BRONZE_PATH)
 
+        #read the csv files and assign it to a dataframe
         df_bronze_flights = read_flight_csv(spark, flight_files)
         df_bronze_runways = read_runways_csv(spark, runways_files)
 
+        #filter and clean the dataframes
         df_silver_flights = df_flights_transformations(df_bronze_flights)
         df_silver_runways = df_runways_transformations(df_bronze_runways)
-
+    
         df_silver_flights = join_df_flights_and_runways(df_silver_flights, df_silver_runways)
 
         df_silver_flights = add_row_hash(df_silver_flights)
@@ -89,7 +93,7 @@ def prepare_flights_silver():
         
 @task(retries=0)
 def prepare_passengers_silver():
-
+    #same structure as the function above
     spark = get_spark()
     try:
         passenger_files = get_passenger_files(PASSENGER_BRONZE_PATH)
@@ -121,24 +125,26 @@ def prepare_weather_silver():
 
 
 # --------------------------------------------------
-# DAG 2 : Insertion SQL Server
+# Insertion SQL Server
 # --------------------------------------------------
 
 @task(retries=0)
 def insert_flights_to_sql():
-
+    #get the needed environments variables
     sql_staging_url, sql_dwh_url, sql_user, sql_password, sql_table = get_sql_env(sql_table_env_name="SQL_SERVER_TABLE")
 
     spark = get_spark()
     try:
+        #number of lines in the table before the insertion
         before = get_sql_row_count(spark, sql_staging_url, sql_table, sql_user, sql_password)
 
         df_flights_silver = read_flights_parquet(spark, FLIGHT_SILVER_PATH)
+        #arrange the places of the columns to make the insert easier to build
         df_flights_silver = arrange_parquet_columns_flights_silver(df_flights_silver, FIRST_COLUMNS)
         insert_into_sql_table(df_flights_silver, spark, sql_staging_url, sql_table, sql_user, sql_password)
 
         after = get_sql_row_count(spark, sql_staging_url, sql_table, sql_user, sql_password)
-        log_inserted_rows(sql_table, before, after)
+        log_inserted_rows(sql_table, before, after) #monitor the number of rows inserted
 
     finally:
         spark.stop()
@@ -146,7 +152,7 @@ def insert_flights_to_sql():
 
 @task(retries=0)
 def insert_passengers_to_sql():
-
+    #Same as above
     sql_staging_url, sql_dwh_url, sql_user, sql_password, sql_second_table = get_sql_env(sql_table_env_name="SQL_SERVER_SECOND_TABLE")
 
     spark = get_spark()
@@ -201,6 +207,10 @@ def insert_weather_to_sql():
         spark.stop()
 
   
+# --------------------------------------------------
+# ETL SQL SERVER
+# --------------------------------------------------
+
 
 @task(retries=0)
 def load_dim_tables():

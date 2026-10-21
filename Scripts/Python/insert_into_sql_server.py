@@ -9,6 +9,7 @@ ENV_PATH = Path(__file__).resolve().parents[2] / ".env"
 
 def get_sql_env(sql_table_env_name):
 
+    #get variables in the .env and returning them into a tuple(some values will not be used depending on the functions)
     load_dotenv(dotenv_path=ENV_PATH, override=True)
     
     sql_staging_url = os.getenv("SQL_STAGING_URL")
@@ -21,7 +22,7 @@ def get_sql_env(sql_table_env_name):
 
 
 def get_existing_rows(spark,  sql_server_url, sql_table, sql_user, sql_password):
-
+    #gets the number of rows in the sql table by getting all the hashes from every column to compare them later with the new data arriving
     df  = (
         spark.read
             .format("jdbc")
@@ -41,7 +42,7 @@ def insert_into_sql_table(df, spark, sql_server_url, sql_table, sql_user, sql_pa
 
     exisiting_rows_df = get_existing_rows(spark, sql_server_url, sql_table, sql_user, sql_password)
 
-    new_rows_df = df.join(exisiting_rows_df, on="ROW_HASH", how="left_anti")
+    new_rows_df = df.join(exisiting_rows_df, on="ROW_HASH", how="left_anti")#filter only new column that does not match with the existing hashes
 
     (
         new_rows_df.write
@@ -51,8 +52,8 @@ def insert_into_sql_table(df, spark, sql_server_url, sql_table, sql_user, sql_pa
             .option("driver", "com.microsoft.sqlserver.jdbc.SQLServerDriver")
             .option("user", sql_user)
             .option("password", sql_password)
-            .option("batchsize", "50000")
-            .option("numPartitions", "6")
+            .option("batchsize", "50000") #number of rows sent at once
+            .option("numPartitions", "6")#number of simultaneous connections to sql server
             .mode("append")
             .save()
     )
@@ -60,13 +61,13 @@ def insert_into_sql_table(df, spark, sql_server_url, sql_table, sql_user, sql_pa
 
 def execute_sql_file(spark, file_path, sql_server_url, user, password):
 
-    # Lire le fichier SQL
+    # Read the sql file
     sql = Path(file_path).read_text(encoding="utf-8-sig")
 
-    # Séparer les instructions GO (SQL Server)
+    # Separating GO statements (SQL Server)
     batches = re.split(r"(?im)^\s*GO\s*;?\s*$", sql)
 
-    # Réutiliser le driver JDBC Microsoft
+    # Reuse the Microsoft JDBC driver
     jvm = spark._jvm
 
     properties = jvm.java.util.Properties()
@@ -82,7 +83,7 @@ def execute_sql_file(spark, file_path, sql_server_url, user, password):
     statement = None
 
     try:
-        connection.setAutoCommit(True)
+        connection.setAutoCommit(True)#allows jdbc to commit to sql server
         statement = connection.createStatement()
 
         for batch in batches:
@@ -91,7 +92,7 @@ def execute_sql_file(spark, file_path, sql_server_url, user, password):
 
             has_result = statement.execute(batch)
 
-            # Consommer tous les résultats et erreurs SQL
+            # Consume all SQL results and errors
             while True:
                 if has_result:
                     result = statement.getResultSet()
@@ -106,7 +107,7 @@ def execute_sql_file(spark, file_path, sql_server_url, user, password):
         try:
             if statement is not None:
                 statement.close()
-        finally:
+        finally: #if there is a problem to close the request, close the connection to prevent further bugs
             connection.close()
 
 

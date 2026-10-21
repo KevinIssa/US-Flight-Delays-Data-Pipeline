@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from airflow_task import *
 from airflow.sdk import dag
 
-# Configuration des chemins d'import
+# Import path setup
 AIRFLOW_PATH = Path(__file__).resolve().parent
 PYTHON_PATH = AIRFLOW_PATH.parent
 

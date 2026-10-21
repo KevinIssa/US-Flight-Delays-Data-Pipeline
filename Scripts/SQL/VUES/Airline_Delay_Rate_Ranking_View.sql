@@ -20,6 +20,7 @@ WITH Airline_Delays AS (
 
     GROUP BY F.REPORTING_AIRLINE_ID
 ),
+
 Airline_Rates AS (
     SELECT
         REPORTING_AIRLINE_ID,
@@ -49,7 +50,7 @@ INNER JOIN dbo.Dim_Airline AS AL
     ON AL.DOT_ID_REPORTING_AIRLINE = AR.REPORTING_AIRLINE_ID;
 GO
 
--- Verification
+-- Checking
 SELECT *
 FROM dbo.Airline_Delay_Rate_Ranking_View
 ORDER BY DELAY_RATE_PCT DESC;
