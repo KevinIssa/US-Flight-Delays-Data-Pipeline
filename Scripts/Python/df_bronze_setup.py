@@ -7,8 +7,7 @@ def get_files(folder_path, extension="csv"):
 
 def read_csv(spark, files, columns_to_keep=None, infer_schema=False):
     """
-    Read CSV files into a Spark DataFrame and optionally
-    select specific columns.
+    Read CSV files into a Spark DataFrame and optionally select specific columns.
     """
     df = spark.read.csv(
         files,
