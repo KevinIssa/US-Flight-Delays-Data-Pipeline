@@ -103,7 +103,9 @@ BEGIN TRY
         DATE_ID                INT PRIMARY KEY IDENTITY(1,1),
         [YEAR]                 INT NOT NULL,
         [MONTH]                INT NOT NULL,
-        [QUARTER]              INT,
+        [QUARTER]              INT
+
+        CONSTRAINT FK_DIM_DATE_FLIGHT FOREIGN KEY (YEAR,MONTH) REFERENCES Dim_Date_Flights((YEAR,MONTH))
     );
 
 

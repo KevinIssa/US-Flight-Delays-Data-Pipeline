@@ -1,4 +1,4 @@
-USE StagingSilver;
+USE TempSilver;
 GO
 
 SET XACT_ABORT ON;

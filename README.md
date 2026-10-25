@@ -1,176 +1,141 @@
-# Data Engineering Project — Domestic Flight Delays
+# US Domestic Flight Delays — End-to-End Data Engineering Pipeline
 
-Data processing and analysis project using **PySpark**.
+**A collaborative Data Engineering project built to ingest, transform, and analyze US domestic aviation data at scale.**
 
-## 🛠️ Technologies
+The project covers **January 2019 to June 2026** in its reference dataset and brings together flight operations, passenger traffic, airport information, and historical weather data. It implements an automated **Bronze → Silver → Gold** pipeline, from source acquisition to a SQL Server dimensional data warehouse and reporting views. Power BI reports are created separately.
 
-- Python 3.13
-- PySpark 4.2.0
-- Poetry
-- SQL Server
-- Java 21 JDK
-- Git
+**Tech stack:** Python · PySpark / Apache Spark · Apache Airflow · Microsoft SQL Server · JDBC · Parquet · Power BI · Poetry
 
-## 📋 Requirements
-- **32 go of ram to run the whole dataset locally** 
-Before setting up the project, install:
+## At a glance
 
-- **Python 3.13** from the official Python website
-- **Java JDK 21** or another Java version compatible with the project
-- **Poetry** 
-- **Git**
-IF ON WINDOWS
-- **Hadoop winutils.exe + hadoop.dll from https://github.com/zehelh/winutils**
-- **HADOOP_HOME configured**
-- **%HADOOP_HOME%\bin added to PATH**
+| Reference-run metric | Value |
+| --- | ---: |
+| Raw records processed (Bronze) | **~50 million** |
+| Input CSV files | **101** |
+| Flight records loaded into the warehouse | **47,494,086** |
+| Passenger segments loaded into the warehouse | **1,970,347** |
+| Airports represented in the warehouse | **6,693** |
+| Airlines in the analysis scope | **18** |
 
-Check that the required tools are available:
+> These numbers describe a reference run for the selected 2019–2026 period. The number of files and records varies with the date range processed.
 
-```bash
-python --version
-poetry --version
-git --version
-java --version
+## Project goals
+
+The pipeline was designed to provide a reliable foundation for exploring questions such as:
+
+- How do flight delays evolve across months and years, and what are the main reported causes?
+- How do passenger volumes, seasonality, weather, and scheduled departure times relate to delays?
+- Which airlines have the highest **proportion of delayed flights**, rather than simply the largest absolute number?
+
+The emphasis is on the **data engineering work behind the analysis**: integrating heterogeneous datasets, applying data-quality rules, designing a warehouse, and orchestrating repeatable loads.
+
+## Architecture
+
+```mermaid
+flowchart LR
+    A["BTS · USDOT · Open-Meteo<br/>Source datasets"] --> B["BRONZE<br/>Raw CSV ingestion"]
+    B --> C["SILVER<br/>PySpark cleaning & Parquet<br/>SQL Server staging"]
+    C --> D["GOLD<br/>Dimensional warehouse<br/>SQL reporting views"]
+    D --> E["Power BI<br/>Manual report building"]
+    F["Apache Airflow"] -.-> B
+    F -.-> C
+    F -.-> D
 ```
 
-On Windows, you can also check which Python versions are installed with:
+**Bronze — ingestion.** Python scripts download and extract flight and passenger datasets, collect runway reference data, and prepare API-based weather inputs. The original data is retained as CSV files.
 
-```bash
-py -0p
-```
+**Silver — processing and staging.** PySpark selects relevant fields, applies cleaning and filtering rules, and writes Parquet datasets (partitioned by year and month where appropriate). Processed data is loaded into the `StagingSilver` SQL Server database through JDBC.
 
-If `poetry` is installed but the command is not recognized, verify that Poetry's installation directory is included in your system `PATH`.
+**Gold — dimensional modeling.** SQL ETL scripts populate `DWH_DomesticFlights`: two fact tables (`Fact_Flights` and `Fact_Passengers`) supported by airline, airport, date, time, and weather dimensions. SQL views prepare data for Power BI.
 
----
+**Orchestration.** Airflow coordinates ingestion, Silver processing, staging loads, dimension and fact loading, and the SQL reporting layer. Only the Power BI reporting work remains manual.
 
-## 📥 Project Setup
+## Data sources and processing
 
-### 1. Clone the repository
+| Source | Data | Role in the pipeline |
+| --- | --- | --- |
+| **Bureau of Transportation Statistics — Flights** | Individual scheduled domestic flights | Flight dates, airlines, delays, cancellations, and reported delay causes |
+| **Bureau of Transportation Statistics — Passenger segments** | Monthly traffic records by carrier and route | Passenger volumes, seat capacity, and other traffic measures |
+| **U.S. Department of Transportation — Runways** | Airport/runway reference records | Airport attributes and geographical context |
+| **Open-Meteo** | Historical weather observations | Weather enrichment for relevant flights; coverage remains partial |
 
-```bash
-git clone <REPOSITORY_URL>
-```
+Selected transformation decisions:
 
-Move into the project directory:
+- **Flights:** retain cancelled flights; apply quality filters to non-cancelled records with insufficient delay and duration information.
+- **Passengers:** exclude zero-passenger segments and restrict the analytical scope to airlines represented in the flight dataset.
+- **Runways:** retain one representative runway record per airport, since airport-level information is sufficient for this analysis.
+- **Partitioning:** organize large Parquet datasets by `YEAR` and `MONTH` to keep period-based processing manageable.
 
-```bash
-cd Data-Engineering-project
-```
+## Data warehouse and reporting
 
-### 2. Configure Python
+The model deliberately handles **two different time granularities**:
 
-Check that Python 3.13 is available:
+- `Fact_Flights` contains **one row per flight** and uses a daily flight-date dimension.
+- `Fact_Passengers` contains **monthly passenger-segment records** and uses a monthly date dimension.
 
-```bash
-py -0p
-```
+Reporting can align both facts on their common **year and month**, with flight measures aggregated before combining them with monthly passenger totals. This avoids artificially multiplying passenger counts when joining datasets with different grains.
 
-### 3. Install dependencies
+One implemented SQL reporting view ranks airlines by **arrival-delay rate**:
 
-The repository already includes a `poetry.lock` file.
+**Delay rate = flights arriving at least 15 minutes late ÷ operated flights × 100**
 
-After cloning the project, you do **not** need to generate a new lock file.
+Cancelled flights are excluded from this ranking. Using a ratio makes airline comparisons more meaningful than ranking by raw delay counts alone.
 
-Simply run:
+## Engineering challenges and solutions
 
-```bash
-poetry install
-```
+### 1. Repeatable loads and duplicate prevention
 
-Verify the environment:
+To support safe DAG reruns, PySpark generates a `ROW_HASH` from the business values of each record. Unique SQL Server indexes (including `IGNORE_DUP_KEY` where configured) help prevent duplicate staging records. Warehouse ETL scripts also check existing business keys before inserting new dimension and fact rows.
 
-```bash
-poetry env info
-```
+### 2. Large JDBC writes under resource constraints
 
-Poetry will create the virtual environment and install the dependency versions defined in `poetry.lock`.
+Loading tens of millions of records exposed SQL Server locking and memory-pressure issues on the initial workstation. The ingestion strategy was adjusted through **smaller write transactions, more partitions, JDBC batch tuning, and controlled parallelism**. These changes helped make the full-data loads manageable without changing the overall architecture.
 
-Only run `poetry lock` if the project dependencies are modified.
+### 3. Inconsistent airport identifiers
 
----
+The flight/passenger sources and runway reference data sometimes use different identifiers for the same airport (for example, `AZA → IWA` and `FCA → GPI`). Missing matches initially excluded passenger records during warehouse loading.
 
-## 🐍 Python Environment
+After introducing explicit airport-code mappings, the retained passenger coverage within the selected airline scope improved from **99.285% to 99.9992%** — reducing excluded passengers from **37,908,220 to 43,145**.
 
-Python dependencies are managed with Poetry.
+### 4. Lightweight pipeline observability
 
-Main versions used by the project:
+Airflow provides task status and execution durations. Additional task logs report row counts before and after database loads, making it easier to check incremental behavior and validate the records loaded into staging, dimensions, and facts. Memory usage was also inspected during demanding runs to identify pressure on SQL Server and WSL/PySpark.
+
+## Repository organization
 
 ```text
-Python  : 3.13
-PySpark : 4.2.0
-pandas  : 2.2.3
+Data/
+├── Bronze/
+└── Silver/
+
+Scripts/
+├── Python/
+│   ├── API/
+│   ├── Airflow/
+│   ├── Constants/
+│   └── Scraping/
+└── SQL/
+    ├── CREATE TABLES/
+    ├── ETL/
+    └── VUES/
+
+Drivers/
 ```
 
-To run Python inside the Poetry environment:
+The repository separates **source acquisition, Spark-based processing, orchestration, SQL modeling, and analytical views**, so each stage of the pipeline has a clear responsibility.
 
-```bash
-poetry run python
-```
+## Current scope and next steps
 
-You can also execute project scripts with:
+The **data pipeline through the SQL reporting layer is automated**. The key remaining limitations and planned improvements are:
 
-```bash
-poetry run python path/to/script.py
-```
+- **Weather enrichment:** the API integration and warehouse structures are in place, but historical weather coverage is incomplete because of API request limits.
+- **Analytics:** expand the set of business-focused SQL views and Power BI visualizations.
+- **Performance:** continue reducing processing time and memory consumption during large JDBC loads.
 
----
+## Project presentation
 
-## ☕ Java
+A PowerPoint walkthrough of the architecture, dimensional models, ETL decisions, monitoring results, and reporting is intended to accompany this repository:
 
-PySpark requires Java to run.
+**[View the project presentation](docs/project_presentation.pptx)**
 
-Java is **not managed by Poetry** and must therefore be installed separately on the machine.
-
-Check the installed Java version with:
-
-```bash
-java --version
-```
-
-If required, also verify that `JAVA_HOME` is correctly configured.
-
----
-
-## 🧪 Environment Check
-
-After running:
-
-```bash
-poetry install
-```
-
-verify that PySpark is correctly installed:
-
-```bash
-poetry run python -c "import pyspark; print('PySpark:', pyspark.__version__)"
-```
-
-Verify pandas:
-
-```bash
-poetry run python -c "import pandas; print('pandas:', pandas.__version__)"
-```
-
----
-
-## 🔐 Sensitive Data
-
-Never commit sensitive information such as:
-
-- `.env` files
-- credentials
-- passwords
-- API keys
-- SQL Server usernames or passwords
-
-The `.env` file must be included in `.gitignore`.
-
-Example:
-
-```gitignore
-.env
-```
-
-If environment variables are required by the project, create your own local `.env` file after cloning the repository.
-
-If both commands work, the Python environment is correctly configured.
+<!-- Add the PowerPoint at docs/project_presentation.pptx, or update the link above to match its location in the repository. -->

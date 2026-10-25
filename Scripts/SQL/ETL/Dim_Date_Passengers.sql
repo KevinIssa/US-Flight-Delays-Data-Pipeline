@@ -11,19 +11,19 @@ BEGIN TRY
         [QUARTER]
     )
     SELECT DISTINCT TOP (1000)
-        SP.[YEAR],
-        SP.[MONTH],
-        SP.[QUARTER]
+        DF.[YEAR],
+        DF.[MONTH],
+        DF.[QUARTER]
 
-    FROM StagingSilver.dbo.SegmentPassengers AS SP
+    FROM Dim_Date_Flights AS DF
 
-    WHERE SP.[YEAR] IS NOT NULL
-      AND SP.[MONTH] IS NOT NULL
+    WHERE DF.[YEAR] IS NOT NULL
+      AND DF.[MONTH] IS NOT NULL
       AND NOT EXISTS (
         SELECT 1
         FROM dbo.Dim_Date_Passengers AS DP
-        WHERE DP.[YEAR] = SP.[YEAR]
-          AND DP.[MONTH] = SP.[MONTH]
+        WHERE DP.[YEAR] = DF.[YEAR]
+          AND DP.[MONTH] = DF.[MONTH]
      )
 
     COMMIT TRANSACTION;
