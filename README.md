@@ -16,7 +16,7 @@ The project covers **January 2019 to June 2026** in its reference dataset and br
 | Passenger segments* loaded into the warehouse | **1,970,347** |
 | Airports represented in the warehouse | **6,693** |
 | Airlines in the analysis scope | **18** |
-*In aviation, a segment refers to a direct route between an origin and a destination. In this dataset, each passenger segment record represents the number of passengers transported by an airline on a specific route during a given month.
+*In aviation, a segment refers to a direct route between an origin and a destination. In this dataset, each passenger segment record represents the number of passengers transported by an airline on a specific route during a given month*.
 > These numbers describe a reference run for the selected 2019–2026 period. The number of files and records varies with the date range processed.
 
 ## Project goals
