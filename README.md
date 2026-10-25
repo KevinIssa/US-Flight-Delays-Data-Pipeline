@@ -4,7 +4,7 @@
 
 The project covers **January 2019 to June 2026** in its reference dataset and brings together flight operations, passenger traffic, airport information, and historical weather data. It implements an automated **Bronze → Silver → Gold** pipeline, from source acquisition to a SQL Server dimensional data warehouse and reporting views. Power BI reports are created separately.
 
-**Tech stack:** Python · PySpark / Apache Spark · Apache Airflow · Microsoft SQL Server · JDBC · Parquet · Power BI · Poetry
+**Tech stack:** Python · PySpark / Apache Spark · Apache Airflow · Microsoft SQL Server · Parquet · Power BI · Poetry
 
 ## At a glance
 
@@ -13,10 +13,10 @@ The project covers **January 2019 to June 2026** in its reference dataset and br
 | Raw records processed (Bronze) | **~50 million** |
 | Input CSV files | **101** |
 | Flight records loaded into the warehouse | **47,494,086** |
-| Passenger segments loaded into the warehouse | **1,970,347** |
+| Passenger segments* loaded into the warehouse | **1,970,347** |
 | Airports represented in the warehouse | **6,693** |
 | Airlines in the analysis scope | **18** |
-
+*In aviation, a segment refers to a direct route between an origin and a destination. In this dataset, each passenger segment record represents the number of passengers transported by an airline on a specific route during a given month.
 > These numbers describe a reference run for the selected 2019–2026 period. The number of files and records varies with the date range processed.
 
 ## Project goals
@@ -44,7 +44,7 @@ flowchart LR
 
 **Bronze — ingestion.** Python scripts download and extract flight and passenger datasets, collect runway reference data, and prepare API-based weather inputs. The original data is retained as CSV files.
 
-**Silver — processing and staging.** PySpark selects relevant fields, applies cleaning and filtering rules, and writes Parquet datasets (partitioned by year and month where appropriate). Processed data is loaded into the `StagingSilver` SQL Server database through JDBC.
+**Silver — processing and staging.** PySpark selects relevant fields, applies cleaning and filtering rules, and writes Parquet datasets (partitioned by year and month where appropriate). Processed data is loaded into the `TempSilver` SQL Server database through JDBC to connect PySpark and SQL Server.
 
 **Gold — dimensional modeling.** SQL ETL scripts populate `DWH_DomesticFlights`: two fact tables (`Fact_Flights` and `Fact_Passengers`) supported by airline, airport, date, time, and weather dimensions. SQL views prepare data for Power BI.
 
@@ -63,7 +63,7 @@ Selected transformation decisions:
 
 - **Flights:** retain cancelled flights; apply quality filters to non-cancelled records with insufficient delay and duration information.
 - **Passengers:** exclude zero-passenger segments and restrict the analytical scope to airlines represented in the flight dataset.
-- **Runways:** retain one representative runway record per airport, since airport-level information is sufficient for this analysis.
+- **Runways:** retain one representative runway record per airport, since this airport level of information is sufficient for this analysis.
 - **Partitioning:** organize large Parquet datasets by `YEAR` and `MONTH` to keep period-based processing manageable.
 
 ## Data warehouse and reporting
@@ -87,19 +87,19 @@ Cancelled flights are excluded from this ranking. Using a ratio makes airline co
 
 To support safe DAG reruns, PySpark generates a `ROW_HASH` from the business values of each record. Unique SQL Server indexes (including `IGNORE_DUP_KEY` where configured) help prevent duplicate staging records. Warehouse ETL scripts also check existing business keys before inserting new dimension and fact rows.
 
-### 2. Large JDBC writes under resource constraints
-
-Loading tens of millions of records exposed SQL Server locking and memory-pressure issues on the initial workstation. The ingestion strategy was adjusted through **smaller write transactions, more partitions, JDBC batch tuning, and controlled parallelism**. These changes helped make the full-data loads manageable without changing the overall architecture.
-
-### 3. Inconsistent airport identifiers
+### 2. Inconsistent airport identifiers
 
 The flight/passenger sources and runway reference data sometimes use different identifiers for the same airport (for example, `AZA → IWA` and `FCA → GPI`). Missing matches initially excluded passenger records during warehouse loading.
 
 After introducing explicit airport-code mappings, the retained passenger coverage within the selected airline scope improved from **99.285% to 99.9992%** — reducing excluded passengers from **37,908,220 to 43,145**.
 
-### 4. Lightweight pipeline observability
+### 3. Memory optimisation
 
-Airflow provides task status and execution durations. Additional task logs report row counts before and after database loads, making it easier to check incremental behavior and validate the records loaded into staging, dimensions, and facts. Memory usage was also inspected during demanding runs to identify pressure on SQL Server and WSL/PySpark.
+Although PySpark is designed for distributed data processing, this project was developed and executed on a single local machine for educational purposes.
+
+Processing nearly 50 million records while running PySpark, SQL Server, and Airflow on the same machine required careful memory and resource management.
+
+To overcome these limitations, we optimised Spark partitioning, reduced JDBC batch sizes, and controlled the number of concurrent writes to SQL Server. These adjustments helped reduce memory pressure, prevent SQL Server resource exhaustion, and improve the stability of the pipeline when handling large datasets.
 
 ## Repository organization
 
