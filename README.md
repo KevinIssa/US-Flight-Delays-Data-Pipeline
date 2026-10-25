@@ -4,7 +4,7 @@
 
 The project was developed as part of a final assignment for a Data Engineering training program, with the goal of applying the technical skills acquired throughout the training to a practical, end-to-end data pipeline.
 
-The project covers **January 2019 to June 2026** in its reference dataset and brings together flight operations, passenger traffic, airport information, and historical weather data. It implements an automated **Bronze → Silver → Gold** pipeline, from source acquisition to a SQL Server dimensional data warehouse and reporting views. Power BI reports are created separately.
+It covers **January 2019 to June 2026** in its reference dataset and brings together flight operations, passenger traffic, airport information, and historical weather data. It implements an automated **Bronze → Silver → Gold** pipeline, from source acquisition to a SQL Server dimensional data warehouse and reporting views. Power BI reports are created separately.
 
 **Tech stack:** Python · PySpark / Apache Spark · Apache Airflow · Microsoft SQL Server · Parquet · Power BI · Poetry
 
