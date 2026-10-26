@@ -136,8 +136,8 @@ The **data pipeline through the SQL reporting layer is automated**. The key rema
 
 ## Project presentation
 
-A PowerPoint walkthrough of the architecture, dimensional models, ETL decisions, monitoring results, and reporting is intended to accompany this repository:
+A PDF walkthrough of the architecture, dimensional models, ETL decisions, monitoring results, and reporting is intended to accompany this repository:
 
-**[View the project presentation](Domestic Flight Project Presentation.pdf)**
+**[View the project presentation](Domestic%20Flight%20Project%20Presentation.pdf)**
 
 <!-- Add the PowerPoint at docs/project_presentation.pptx, or update the link above to match its location in the repository. -->
